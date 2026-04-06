@@ -13,7 +13,7 @@ const GameScene = () => {
       private player?: Phaser.GameObjects.Rectangle & { body: Phaser.Physics.Arcade.Body };
       private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
       private isHiding: boolean = false;
-      private shadowZones: Phaser.Physics.Arcade.Sprite[] = [];
+      private shadowZones: Phaser.GameObjects.Rectangle[] = [];
       private visibilityText?: Phaser.GameObjects.Text;
       private instructionsText?: Phaser.GameObjects.Text;
 
@@ -22,7 +22,7 @@ const GameScene = () => {
       }
 
       preload() {
-        // Não precisamos carregar imagens externas para testar a física
+        // Não carregamos imagens externas para evitar problemas de CORS e renderização
       }
 
       create() {
@@ -36,10 +36,10 @@ const GameScene = () => {
         const ground = this.add.rectangle(width / 2, height - 50, width, 100, 0x2d2d44);
         this.physics.add.existing(ground, true);
 
-        // Criar sombras (zonas de furtividade)
-        this.createShadow(150, height - 100, 120, 100, 'shadowTexture1');
-        this.createShadow(width - 150, height - 100, 120, 100, 'shadowTexture2');
-        this.createShadow(width / 2, height - 100, 80, 100, 'shadowTexture3');
+        // Criar sombras (zonas de furtividade) - usando retângulos simples
+        this.createShadow(150, height - 120, 120, 100);
+        this.createShadow(width - 150, height - 120, 120, 100);
+        this.createShadow(width / 2, height - 120, 80, 100);
 
         // Criar o personagem como um RETÂNGULO simples (azul) para teste de física
         // Parâmetros: x, y, largura, altura, cor
@@ -47,11 +47,11 @@ const GameScene = () => {
         this.physics.add.existing(playerRect);
         
         this.player = playerRect as any;
-        this.player.body.setCollideWorldBounds(true);
-        this.player.body.setBounce(0.2, 0.2);
-
-        // Configurar colisão com o chão
-        this.physics.add.collider(this.player, ground);
+        if (this.player && this.player.body) {
+          (this.player.body as Phaser.Physics.Arcade.Body).setCollideWorldBounds(true);
+          (this.player.body as Phaser.Physics.Arcade.Body).setBounce(0.2, 0.2);
+          this.physics.add.collider(this.player, ground);
+        }
 
         // Cursores
         this.cursors = this.input.keyboard?.createCursorKeys();
@@ -80,7 +80,7 @@ const GameScene = () => {
           fontFamily: 'monospace',
         });
 
-        this.add.text(width / 2, 20, 'O PREÇO DA ORDEM - Teste de Física', {
+        this.add.text(width / 2, 20, 'O PREÇO DA ORDEM - Protótipo v0.1.0', {
           fontSize: '18px',
           color: '#ffffff',
           fontFamily: 'Arial',
@@ -94,19 +94,13 @@ const GameScene = () => {
         });
       }
 
-      private createShadow(x: number, y: number, w: number, h: number, textureKey: string) {
-        const shadowGraphics = this.make.graphics({ x: 0, y: 0 });
-        shadowGraphics.fillStyle(0x0a0a0f, 0.6);
-        shadowGraphics.fillRect(0, 0, w, h);
-        shadowGraphics.generateTexture(textureKey, w, h);
-        shadowGraphics.destroy();
-
-        const shadow = this.physics.add.sprite(x, y, textureKey);
-        shadow.setDisplaySize(w, h);
-        if (shadow.body) {
-          shadow.body.setAllowGravity(false);
-          shadow.body.moves = false;
-        }
+      private createShadow(x: number, y: number, w: number, h: number) {
+        // Criar sombra como um retângulo simples com transparência
+        const shadow = this.add.rectangle(x, y, w, h, 0x0a0a0f);
+        shadow.setAlpha(0.6);
+        this.physics.add.existing(shadow, true);
+        
+        // Armazenar como retângulo para manter compatibilidade com o resto do código
         this.shadowZones.push(shadow);
       }
 
@@ -181,7 +175,7 @@ const GameScene = () => {
       physics: {
         default: 'arcade',
         arcade: {
-          gravity: { x: 0, y: 500 }, // Aumentei um pouco a gravidade para um teste mais nítido
+          gravity: { x: 0, y: 500 },
           debug: false,
         },
       },
@@ -194,6 +188,8 @@ const GameScene = () => {
       canvas: (() => {
         const canvas = document.createElement('canvas');
         canvas.style.display = 'block';
+        canvas.style.maxWidth = '100%';
+        canvas.style.height = 'auto';
         return canvas;
       })(),
     };
@@ -211,7 +207,7 @@ const GameScene = () => {
   return (
     <div
       ref={gameContainerRef}
-      className="w-full h-screen flex items-center justify-center bg-black"
+      className="w-full h-screen flex items-center justify-center bg-black overflow-hidden"
     />
   );
 };
