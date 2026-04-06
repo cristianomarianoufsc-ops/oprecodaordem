@@ -10,7 +10,7 @@ const GameScene = () => {
 
     // Criar a cena do jogo
     class MainScene extends Phaser.Scene {
-      private player?: Phaser.Physics.Arcade.Sprite;
+      private player?: Phaser.GameObjects.Rectangle & { body: Phaser.Physics.Arcade.Body };
       private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
       private isHiding: boolean = false;
       private shadowZones: Phaser.Physics.Arcade.Sprite[] = [];
@@ -22,8 +22,7 @@ const GameScene = () => {
       }
 
       preload() {
-        // Carregar o sprite do Horácio
-        this.load.image('horacio', 'https://d2xsxph8kpxj0f.cloudfront.net/310519663448694013/mwQa3zkAafzx8pm36XuBg5/horacio_sprite-iNLDBepAvrbQTWkBVxaKnf.webp');
+        // Não precisamos carregar imagens externas para testar a física
       }
 
       create() {
@@ -42,11 +41,14 @@ const GameScene = () => {
         this.createShadow(width - 150, height - 100, 120, 100, 'shadowTexture2');
         this.createShadow(width / 2, height - 100, 80, 100, 'shadowTexture3');
 
-        // Criar o personagem com o sprite
-        this.player = this.physics.add.sprite(width / 2, height - 150, 'horacio');
-        this.player.setCollideWorldBounds(true);
-        this.player.setBounce(0.2);
-        this.player.setScale(2);
+        // Criar o personagem como um RETÂNGULO simples (azul) para teste de física
+        // Parâmetros: x, y, largura, altura, cor
+        const playerRect = this.add.rectangle(width / 2, height - 150, 32, 48, 0x3498db);
+        this.physics.add.existing(playerRect);
+        
+        this.player = playerRect as any;
+        this.player.body.setCollideWorldBounds(true);
+        this.player.body.setBounce(0.2, 0.2);
 
         // Configurar colisão com o chão
         this.physics.add.collider(this.player, ground);
@@ -57,12 +59,12 @@ const GameScene = () => {
         // Controle de agachar
         this.input.keyboard?.on('keydown-SHIFT', () => {
           this.isHiding = true;
-          this.player?.setTint(0x444444);
+          this.player?.setFillStyle(0x2c3e50); // Escurece o retângulo ao agachar
         });
 
         this.input.keyboard?.on('keyup-SHIFT', () => {
           this.isHiding = false;
-          this.player?.clearTint();
+          this.player?.setFillStyle(0x3498db); // Volta à cor original
         });
 
         // Textos
@@ -78,7 +80,7 @@ const GameScene = () => {
           fontFamily: 'monospace',
         });
 
-        this.add.text(width / 2, 20, 'O PREÇO DA ORDEM - Protótipo', {
+        this.add.text(width / 2, 20, 'O PREÇO DA ORDEM - Teste de Física', {
           fontSize: '18px',
           color: '#ffffff',
           fontFamily: 'Arial',
@@ -115,16 +117,16 @@ const GameScene = () => {
 
         // Movimento
         if (this.cursors.left?.isDown) {
-          this.player.setVelocityX(-speed);
+          this.player.body.setVelocityX(-speed);
         } else if (this.cursors.right?.isDown) {
-          this.player.setVelocityX(speed);
+          this.player.body.setVelocityX(speed);
         } else {
-          this.player.setVelocityX(0);
+          this.player.body.setVelocityX(0);
         }
 
         // Pulo
-        if (this.cursors.space?.isDown && this.player.body?.touching.down) {
-          this.player.setVelocityY(-300);
+        if (this.cursors.space?.isDown && this.player.body.touching.down) {
+          this.player.body.setVelocityY(-350);
         }
 
         // Verificar sombra
@@ -165,7 +167,7 @@ const GameScene = () => {
         if (this.instructionsText) {
           this.instructionsText.setText(
             `Posição: ${Math.round(this.player.x)}, ${Math.round(this.player.y)}\n` +
-            `Velocidade: ${Math.round((this.player.body as any)?.velocity.x || 0)}`
+            `Velocidade: ${Math.round(this.player.body.velocity.x || 0)}`
           );
         }
       }
@@ -173,13 +175,13 @@ const GameScene = () => {
 
     // Config
     const config: Phaser.Types.Core.GameConfig = {
-      type: Phaser.AUTO,
+      type: Phaser.CANVAS,
       width: 800,
       height: 600,
       physics: {
         default: 'arcade',
         arcade: {
-          gravity: { x: 0, y: 300 },
+          gravity: { x: 0, y: 500 }, // Aumentei um pouco a gravidade para um teste mais nítido
           debug: false,
         },
       },

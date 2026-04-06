@@ -151,6 +151,9 @@ Arquivo principal do jogo. Contém:
 - Indicador de visibilidade
 - Física e colisão
 
+### 4. **TROUBLESHOOTING.md**
+Documento essencial para resolver erros técnicos comuns, como falhas de renderização (Canvas vs WebGL) e carregamento de sprites.
+
 ---
 
 ## 🚀 Próximos Passos (Roadmap)
@@ -183,11 +186,11 @@ Arquivo principal do jogo. Contém:
 
 ## 🐛 Problemas Conhecidos e Soluções
 
-### Problema: Sprite com fundo transparente mostrando padrão xadrez
-**Solução:** O Phaser está configurado com `type: Phaser.CANVAS` e a câmera tem cor de fundo definida.
+Consulte o arquivo **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** para detalhes técnicos sobre erros de renderização e carregamento de ativos.
 
-### Problema: Erro "Must set explicit renderType in custom environment"
-**Solução:** Usar `Phaser.CANVAS` em vez de `Phaser.AUTO` para compatibilidade com ambientes customizados.
+### Destaques:
+- **Erro de Renderização:** Sempre use `Phaser.CANVAS` para máxima compatibilidade em ambientes virtuais.
+- **Sprites Externos:** Use retângulos (`add.rectangle`) para testes de física se as imagens externas falharem.
 
 ---
 
