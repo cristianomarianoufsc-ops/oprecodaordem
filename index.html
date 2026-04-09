@@ -52,7 +52,6 @@
         .header p {
             font-size: 14px;
             opacity: 0.9;
-            margin-bottom: 15px;
         }
         
         .games-grid {
@@ -138,28 +137,14 @@
             background: #38a169;
         }
         
-        .btn-assets {
-            background: #ed8936;
-            color: white;
-            margin: 10px auto;
-            width: 90%;
-            max-width: 300px;
-            display: block;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        
-        .btn-assets:hover {
-            background: #dd6b20;
-        }
-        
         .btn-back {
             background: #e53e3e;
             color: white;
             margin-top: 10px;
         }
         
-        /* ASSETS PANEL */
-        #assetsPanel {
+        /* EDITOR PANEL */
+        #editorPanel {
             display: none;
             background: white;
             border-radius: 15px;
@@ -169,30 +154,64 @@
             width: 100%;
         }
         
-        #assetsPanel.active {
+        #editorPanel.active {
             display: block;
         }
         
+        .editor-section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .editor-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 18px;
+        }
+        
+        .editor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .editor-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .editor-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .editor-item input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #cbd5e0;
+        }
+        
+        /* ASSETS IN EDITOR */
         .asset-upload-area {
             border: 2px dashed #cbd5e0;
             border-radius: 10px;
             padding: 20px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             cursor: pointer;
-            transition: border-color 0.3s;
             background: #f7fafc;
-        }
-        
-        .asset-upload-area:hover {
-            border-color: #667eea;
         }
         
         .asset-preview-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            gap: 10px;
         }
         
         .asset-item {
@@ -217,7 +236,6 @@
             margin-top: 5px;
             color: #333;
             font-weight: bold;
-            word-break: break-all;
         }
         
         .btn-remove-asset {
@@ -305,12 +323,6 @@
             #mobileControls.active {
                 display: flex;
             }
-            .header h1 {
-                font-size: 24px;
-            }
-            .header p {
-                font-size: 12px;
-            }
         }
     </style>
 </head>
@@ -321,26 +333,42 @@
             <div class="header">
                 <h1>🎮 Game Launcher</h1>
                 <p>Selecione um jogo para jogar ou editar</p>
-                <button class="btn-assets" onclick="toggleAssetsPanel()">📤 Upload de Sprites</button>
+            </div>
+            <div class="games-grid" id="gamesGrid"></div>
+        </div>
+        
+        <!-- EDITOR PANEL -->
+        <div id="editorPanel">
+            <div class="header" style="color: #333;">
+                <h2 id="editorTitle">Editar Jogo</h2>
+                <p id="editorDescription">Ajuste as cores e faça upload de sprites</p>
             </div>
             
-            <!-- ASSETS PANEL -->
-            <div id="assetsPanel">
-                <h3 style="margin-bottom: 10px;">Gerenciador de Assets</h3>
+            <!-- SEÇÃO DE CORES -->
+            <div class="editor-section">
+                <h3>🎨 Cores e Física</h3>
+                <div class="editor-grid" id="editorGrid"></div>
+            </div>
+            
+            <!-- SEÇÃO DE ASSETS -->
+            <div class="editor-section">
+                <h3>📤 Sprites do Jogo</h3>
                 <p style="font-size: 12px; color: #666; margin-bottom: 15px;">
-                    Para substituir o jogador no Custom Platformer, use o nome <strong>player</strong>.
+                    Faça upload de sprites específicos para este jogo. Use o nome <strong>player</strong> para o personagem.
                 </p>
                 <div class="asset-upload-area" onclick="document.getElementById('assetInput').click()">
                     <span style="font-size: 14px; color: #333; font-weight: bold;">Clique para selecionar imagens</span>
                     <input type="file" id="assetInput" style="display: none" accept="image/*" multiple onchange="handleAssetUpload(event)">
                 </div>
                 <div class="asset-preview-list" id="assetPreviewList"></div>
-                <button class="btn-back" onclick="toggleAssetsPanel()" style="width: 100%;">Fechar Gerenciador</button>
             </div>
-
-            <div class="games-grid" id="gamesGrid"></div>
+            
+            <div class="editor-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-edit" onclick="saveGameConfig()" style="background: #48bb78;">💾 Salvar</button>
+                <button class="btn-back" onclick="cancelEdit()" style="width: 100%; margin-top: 0;">✕ Cancelar</button>
+            </div>
         </div>
-        
+
         <!-- GAME AREA -->
         <div id="gameContainer"></div>
         <div class="game-ui" id="gameUI" style="display: none;">
@@ -362,7 +390,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
     <script>
-        const gamesConfig = [
+        // Carregar configurações do LocalStorage ou usar padrão
+        const savedConfigs = JSON.parse(localStorage.getItem('gamesConfig') || 'null');
+        const gamesConfig = savedConfigs || [
             {
                 id: 'blue-ball',
                 name: 'Blue Ball Platformer',
@@ -377,7 +407,8 @@
                     playerSpeed: 400,
                     jumpForce: 717,
                     platformCount: 3
-                }
+                },
+                assets: {}
             },
             {
                 id: 'custom-game',
@@ -393,35 +424,26 @@
                     playerSpeed: 400,
                     jumpForce: 717,
                     platformCount: 5
-                }
+                },
+                assets: {}
             }
         ];
 
         let currentGame = null;
         let gameInstance = null;
-        let customAssets = JSON.parse(localStorage.getItem('customAssets') || '{}');
+        let editingGame = null;
         const mobileState = { left: false, right: false, jump: false };
 
         // --- ASSETS LOGIC ---
-        function toggleAssetsPanel() {
-            const panel = document.getElementById('assetsPanel');
-            panel.classList.toggle('active');
-            renderAssetPreviews();
-            if (panel.classList.contains('active')) {
-                panel.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-
         function handleAssetUpload(event) {
             const files = event.target.files;
-            if (!files.length) return;
+            if (!files.length || !editingGame) return;
 
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const name = file.name.split('.')[0].toLowerCase();
-                    customAssets[name] = e.target.result;
-                    localStorage.setItem('customAssets', JSON.stringify(customAssets));
+                    editingGame.assets[name] = e.target.result;
                     renderAssetPreviews();
                 };
                 reader.readAsDataURL(file);
@@ -429,19 +451,22 @@
         }
 
         function removeAsset(name) {
-            delete customAssets[name];
-            localStorage.setItem('customAssets', JSON.stringify(customAssets));
-            renderAssetPreviews();
+            if (editingGame) {
+                delete editingGame.assets[name];
+                renderAssetPreviews();
+            }
         }
 
         function renderAssetPreviews() {
             const list = document.getElementById('assetPreviewList');
             list.innerHTML = '';
-            Object.keys(customAssets).forEach(name => {
+            if (!editingGame) return;
+            
+            Object.keys(editingGame.assets).forEach(name => {
                 const item = document.createElement('div');
                 item.className = 'asset-item';
                 item.innerHTML = `
-                    <img src="${customAssets[name]}">
+                    <img src="${editingGame.assets[name]}">
                     <span>${name}</span>
                     <button class="btn-remove-asset" onclick="removeAsset('${name}')">Remover</button>
                 `;
@@ -455,10 +480,8 @@
                 const el = document.getElementById(id);
                 const start = (e) => { e.preventDefault(); mobileState[key] = true; };
                 const end = (e) => { e.preventDefault(); mobileState[key] = false; };
-                el.addEventListener('touchstart', start);
-                el.addEventListener('touchend', end);
-                el.addEventListener('mousedown', start);
-                el.addEventListener('mouseup', end);
+                el.addEventListener('touchstart', start); el.addEventListener('touchend', end);
+                el.addEventListener('mousedown', start); el.addEventListener('mouseup', end);
             };
             bind('btnLeft', 'left'); bind('btnRight', 'right'); bind('btnJump', 'jump');
         }
@@ -476,6 +499,7 @@
                         <p>${game.description}</p>
                         <div class="game-buttons">
                             <button class="btn-play" onclick="playGame('${game.id}')">▶ Jogar</button>
+                            <button class="btn-edit" onclick="editGame('${game.id}')">✎ Editar</button>
                         </div>
                     </div>
                 `;
@@ -504,8 +528,9 @@
         }
 
         function preload() {
-            if (customAssets['player']) {
-                this.load.image('customPlayer', customAssets['player']);
+            // Carregar Assets Específicos do Jogo
+            if (currentGame.assets['player']) {
+                this.load.image('gamePlayer', currentGame.assets['player']);
             }
 
             let graphics = this.make.graphics({ x: 0, y: 0, add: false });
@@ -556,8 +581,9 @@
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
             }
 
-            if (currentGame.id === 'custom-game' && customAssets['player']) {
-                this.player = this.physics.add.sprite(100, 450, 'customPlayer');
+            // Seleção de Sprite
+            if (currentGame.assets['player']) {
+                this.player = this.physics.add.sprite(100, 450, 'gamePlayer');
             } else if (currentGame.type === 'stickman') {
                 let tex = this.textures.get('stickmanSheet');
                 for(let i=0; i<4; i++) tex.add(i, 0, i*64, 0, 64, 64);
@@ -601,11 +627,49 @@
                 player.setVelocityY(-settings.jumpForce);
             }
 
-            if (currentGame.type === 'stickman' && !customAssets['player']) {
+            if (currentGame.type === 'stickman' && !currentGame.assets['player']) {
                 if (!player.body.touching.down) player.play('jump', true);
                 else if (moving) player.play('walk', true);
                 else player.play('idle', true);
             }
+        }
+
+        function editGame(gameId) {
+            editingGame = gamesConfig.find(g => g.id === gameId);
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('editorPanel').classList.add('active');
+            document.getElementById('editorTitle').textContent = `Editar: ${editingGame.name}`;
+            renderEditorGrid();
+            renderAssetPreviews();
+        }
+
+        function renderEditorGrid() {
+            const grid = document.getElementById('editorGrid'), s = editingGame.settings;
+            grid.innerHTML = `
+                <div class="editor-item"><label>Cor Jogador</label><input type="color" id="pCol" value="${s.playerColor}"></div>
+                <div class="editor-item"><label>Cor Plataforma</label><input type="color" id="platCol" value="${s.platformColor}"></div>
+                <div class="editor-item"><label>Cor Fundo</label><input type="color" id="bgCol" value="${s.backgroundColor}"></div>
+                <div class="editor-item"><label>Gravidade</label><input type="range" id="grav" min="500" max="2000" value="${s.gravity}"></div>
+                <div class="editor-item"><label>Velocidade</label><input type="range" id="speed" min="200" max="800" value="${s.playerSpeed}"></div>
+            `;
+        }
+
+        function saveGameConfig() {
+            editingGame.settings.playerColor = document.getElementById('pCol').value;
+            editingGame.settings.platformColor = document.getElementById('platCol').value;
+            editingGame.settings.backgroundColor = document.getElementById('bgCol').value;
+            editingGame.settings.gravity = parseInt(document.getElementById('grav').value);
+            editingGame.settings.playerSpeed = parseInt(document.getElementById('speed').value);
+            
+            localStorage.setItem('gamesConfig', JSON.stringify(gamesConfig));
+            alert('✅ Alterações salvas com sucesso!');
+            cancelEdit();
+        }
+
+        function cancelEdit() {
+            document.getElementById('editorPanel').classList.remove('active');
+            document.getElementById('mainMenu').classList.remove('hidden');
+            editingGame = null;
         }
 
         function backToMenu() {
@@ -618,7 +682,6 @@
 
         setupMobileButtons();
         renderGamesGrid();
-        renderAssetPreviews();
     </script>
 </body>
 </html>
