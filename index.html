@@ -39,18 +39,20 @@
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            padding-top: 10px;
         }
         
         .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 28px;
+            margin-bottom: 5px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
         
         .header p {
-            font-size: 16px;
+            font-size: 14px;
             opacity: 0.9;
+            margin-bottom: 15px;
         }
         
         .games-grid {
@@ -139,8 +141,11 @@
         .btn-assets {
             background: #ed8936;
             color: white;
-            margin-top: 10px;
-            width: 100%;
+            margin: 10px auto;
+            width: 90%;
+            max-width: 300px;
+            display: block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         
         .btn-assets:hover {
@@ -161,6 +166,7 @@
             padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin-bottom: 20px;
+            width: 100%;
         }
         
         #assetsPanel.active {
@@ -170,11 +176,12 @@
         .asset-upload-area {
             border: 2px dashed #cbd5e0;
             border-radius: 10px;
-            padding: 30px;
+            padding: 20px;
             text-align: center;
             margin-bottom: 20px;
             cursor: pointer;
             transition: border-color 0.3s;
+            background: #f7fafc;
         }
         
         .asset-upload-area:hover {
@@ -193,6 +200,7 @@
             border-radius: 8px;
             padding: 5px;
             text-align: center;
+            background: white;
         }
         
         .asset-item img {
@@ -207,17 +215,19 @@
             font-size: 10px;
             display: block;
             margin-top: 5px;
-            color: #666;
+            color: #333;
+            font-weight: bold;
             word-break: break-all;
         }
         
         .btn-remove-asset {
             background: #e53e3e;
             color: white;
-            padding: 4px;
+            padding: 6px;
             font-size: 10px;
             margin-top: 5px;
             width: 100%;
+            border-radius: 4px;
         }
         
         /* GAME CONTAINER */
@@ -295,6 +305,12 @@
             #mobileControls.active {
                 display: flex;
             }
+            .header h1 {
+                font-size: 24px;
+            }
+            .header p {
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -305,21 +321,21 @@
             <div class="header">
                 <h1>🎮 Game Launcher</h1>
                 <p>Selecione um jogo para jogar ou editar</p>
-                <button class="btn-assets" onclick="toggleAssetsPanel()">📤 Gerenciar Sprites (Upload)</button>
+                <button class="btn-assets" onclick="toggleAssetsPanel()">📤 Upload de Sprites</button>
             </div>
             
             <!-- ASSETS PANEL -->
             <div id="assetsPanel">
-                <h3>Gerenciador de Assets</h3>
+                <h3 style="margin-bottom: 10px;">Gerenciador de Assets</h3>
                 <p style="font-size: 12px; color: #666; margin-bottom: 15px;">
-                    Faça upload de sprites (PNG/JPG). Para substituir o jogador no Custom Platformer, use o nome <strong>player</strong>.
+                    Para substituir o jogador no Custom Platformer, use o nome <strong>player</strong>.
                 </p>
                 <div class="asset-upload-area" onclick="document.getElementById('assetInput').click()">
-                    <span>Clique aqui para selecionar arquivos</span>
+                    <span style="font-size: 14px; color: #333; font-weight: bold;">Clique para selecionar imagens</span>
                     <input type="file" id="assetInput" style="display: none" accept="image/*" multiple onchange="handleAssetUpload(event)">
                 </div>
                 <div class="asset-preview-list" id="assetPreviewList"></div>
-                <button class="btn-back" onclick="toggleAssetsPanel()">Fechar Gerenciador</button>
+                <button class="btn-back" onclick="toggleAssetsPanel()" style="width: 100%;">Fechar Gerenciador</button>
             </div>
 
             <div class="games-grid" id="gamesGrid"></div>
@@ -328,8 +344,8 @@
         <!-- GAME AREA -->
         <div id="gameContainer"></div>
         <div class="game-ui" id="gameUI" style="display: none;">
-            <p>Use <strong>WASD/Setas</strong> ou Controles Mobile | <strong>ESPAÇO</strong> para pular</p>
-            <button class="btn-back" onclick="backToMenu()">← Voltar ao Menu</button>
+            <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Controles Mobile ativos na tela</p>
+            <button class="btn-back" onclick="backToMenu()" style="width: 100%;">← Voltar ao Menu</button>
         </div>
         
         <!-- MOBILE CONTROLS -->
@@ -391,6 +407,9 @@
             const panel = document.getElementById('assetsPanel');
             panel.classList.toggle('active');
             renderAssetPreviews();
+            if (panel.classList.contains('active')) {
+                panel.scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
         function handleAssetUpload(event) {
@@ -485,19 +504,15 @@
         }
 
         function preload() {
-            // Carregar Sprite Customizado se existir (nome 'player')
             if (customAssets['player']) {
                 this.load.image('customPlayer', customAssets['player']);
             }
 
             let graphics = this.make.graphics({ x: 0, y: 0, add: false });
-            
-            // Textura da bola
             graphics.fillStyle(0xffffff); graphics.fillCircle(30, 30, 30);
             graphics.generateTexture('playerTexture', 60, 60);
             graphics.clear();
             
-            // Stickman Spritesheet
             const fw = 64, fh = 64;
             for (let i = 0; i < 4; i++) {
                 graphics.lineStyle(4, 0xffffff);
@@ -521,7 +536,6 @@
             graphics.generateTexture('stickmanSheet', fw * 4, fh);
             graphics.clear();
             
-            // Plataforma
             graphics.fillStyle(0xffffff); graphics.fillRect(0, 0, 100, 20);
             graphics.generateTexture('platformTexture', 100, 20);
         }
@@ -542,10 +556,8 @@
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
             }
 
-            // Seleção de Sprite
             if (currentGame.id === 'custom-game' && customAssets['player']) {
                 this.player = this.physics.add.sprite(100, 450, 'customPlayer');
-                // Se for imagem única, não tem animação de frame, mas podemos adicionar efeitos
             } else if (currentGame.type === 'stickman') {
                 let tex = this.textures.get('stickmanSheet');
                 for(let i=0; i<4; i++) tex.add(i, 0, i*64, 0, 64, 64);
@@ -589,7 +601,6 @@
                 player.setVelocityY(-settings.jumpForce);
             }
 
-            // Animar apenas se for stickman (custom player é imagem única por enquanto)
             if (currentGame.type === 'stickman' && !customAssets['player']) {
                 if (!player.body.touching.down) player.play('jump', true);
                 else if (moving) player.play('walk', true);
