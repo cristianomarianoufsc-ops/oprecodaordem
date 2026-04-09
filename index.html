@@ -341,6 +341,7 @@
                 name: 'Blue Ball Platformer',
                 description: 'Pule sobre as plataformas com a bola azul (Original)',
                 emoji: '🔵',
+                type: 'ball',
                 settings: {
                     playerColor: '#0000ff',
                     platformColor: '#8b7355',
@@ -355,10 +356,11 @@
             {
                 id: 'custom-game',
                 name: 'Custom Platformer',
-                description: 'Uma cópia para você modificar como quiser!',
+                description: 'Uma cópia com Boneco Palito animado!',
                 emoji: '🛠️',
+                type: 'stickman',
                 settings: {
-                    playerColor: '#ff0000', // Vermelho para diferenciar
+                    playerColor: '#ff0000',
                     platformColor: '#4a5568',
                     backgroundColor: '#a0aec0',
                     gravity: 1050,
@@ -435,16 +437,56 @@
 
         // Phaser Functions
         function preload() {
-            // Criar texturas dinamicamente para evitar erro de Base64/Data URI
             let graphics = this.make.graphics({ x: 0, y: 0, add: false });
             
-            // Textura do jogador (Círculo)
-            graphics.fillStyle(0xffffff); // Branco por padrão, mudaremos com setTint
+            // Textura da bola (Original)
+            graphics.fillStyle(0xffffff);
             graphics.fillCircle(30, 30, 30);
             graphics.generateTexture('playerTexture', 60, 60);
             graphics.clear();
             
-            // Textura da plataforma (Retângulo)
+            // Desenhar Stickman Spritesheet (64x64 por quadro)
+            // 0: Idle, 1: Walk 1, 2: Walk 2, 3: Jump
+            const frames = 4;
+            const fw = 64;
+            const fh = 64;
+            
+            for (let i = 0; i < frames; i++) {
+                graphics.lineStyle(4, 0xffffff);
+                let x = i * fw + fw/2;
+                let y = fh/2;
+                
+                // Cabeça
+                graphics.strokeCircle(x, y - 15, 10);
+                // Corpo
+                graphics.lineBetween(x, y - 5, x, y + 15);
+                
+                if (i === 0) { // Idle
+                    graphics.lineBetween(x, y + 15, x - 10, y + 30); // Perna E
+                    graphics.lineBetween(x, y + 15, x + 10, y + 30); // Perna D
+                    graphics.lineBetween(x, y, x - 15, y + 10); // Braço E
+                    graphics.lineBetween(x, y, x + 15, y + 10); // Braço D
+                } else if (i === 1) { // Walk 1
+                    graphics.lineBetween(x, y + 15, x - 5, y + 30);
+                    graphics.lineBetween(x, y + 15, x + 15, y + 25);
+                    graphics.lineBetween(x, y, x - 10, y + 15);
+                    graphics.lineBetween(x, y, x + 10, y + 5);
+                } else if (i === 2) { // Walk 2
+                    graphics.lineBetween(x, y + 15, x + 5, y + 30);
+                    graphics.lineBetween(x, y + 15, x - 15, y + 25);
+                    graphics.lineBetween(x, y, x + 10, y + 15);
+                    graphics.lineBetween(x, y, x - 10, y + 5);
+                } else if (i === 3) { // Jump
+                    graphics.lineBetween(x, y + 15, x - 15, y + 10);
+                    graphics.lineBetween(x, y + 15, x + 15, y + 10);
+                    graphics.lineBetween(x, y, x - 20, y - 10);
+                    graphics.lineBetween(x, y, x + 20, y - 10);
+                }
+            }
+            graphics.generateTexture('stickmanSheet', fw * frames, fh);
+            graphics.clear();
+            
+            // Textura da plataforma
             graphics.fillStyle(0xffffff);
             graphics.fillRect(0, 0, 100, 20);
             graphics.generateTexture('platformTexture', 100, 20);
@@ -474,20 +516,60 @@
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
             }
 
-            const player = this.physics.add.sprite(100, 450, 'playerTexture');
-            player.setBounce(0.1);
-            player.setCollideWorldBounds(true);
-            player.setTint(Phaser.Display.Color.HexStringToColor(settings.playerColor).color);
-            this.player = player;
+            // Criar jogador baseado no tipo
+            if (currentGame.type === 'stickman') {
+                // Configurar animações do Stickman
+                if (!this.anims.exists('idle')) {
+                    this.anims.create({
+                        key: 'idle',
+                        frames: [{ key: 'stickmanSheet', frame: 0 }],
+                        frameRate: 1
+                    });
+                    this.anims.create({
+                        key: 'walk',
+                        frames: [
+                            { key: 'stickmanSheet', frame: 1 },
+                            { key: 'stickmanSheet', frame: 2 }
+                        ],
+                        frameRate: 8,
+                        repeat: -1
+                    });
+                    this.anims.create({
+                        key: 'jump',
+                        frames: [{ key: 'stickmanSheet', frame: 3 }],
+                        frameRate: 1
+                    });
+                }
 
-            this.physics.add.collider(player, platforms);
+                // O Phaser precisa que a textura seja tratada como spritesheet se quisermos frames
+                // Mas como geramos dinamicamente, vamos usar setFrame manualmente ou recriar como atlas
+                // Simplificação: vamos usar o sprite e mudar o frame via clipping se necessário, 
+                // ou apenas usar a textura e setar o frame (precisamos definir os frames na textura gerada)
+                
+                // Correção: Para usar frames em textura gerada, precisamos adicionar frames manualmente
+                let tex = this.textures.get('stickmanSheet');
+                tex.add(0, 0, 0, 0, 64, 64);
+                tex.add(1, 0, 64, 0, 64, 64);
+                tex.add(2, 0, 128, 0, 64, 64);
+                tex.add(3, 0, 192, 0, 64, 64);
+
+                this.player = this.physics.add.sprite(100, 450, 'stickmanSheet', 0);
+            } else {
+                this.player = this.physics.add.sprite(100, 450, 'playerTexture');
+            }
+
+            this.player.setBounce(0.1);
+            this.player.setCollideWorldBounds(true);
+            this.player.setTint(Phaser.Display.Color.HexStringToColor(settings.playerColor).color);
+
+            this.physics.add.collider(this.player, platforms);
 
             this.cursors = this.input.keyboard.createCursorKeys();
             this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
 
             this.cameras.main.setBackgroundColor(settings.backgroundColor);
             this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
-            this.cameras.main.startFollow(player);
+            this.cameras.main.startFollow(this.player);
         }
 
         function update() {
@@ -498,16 +580,33 @@
             const cursors = this.cursors;
             const settings = currentGame.settings;
 
+            let moving = false;
+
             if (keys.A.isDown || cursors.left.isDown) {
                 player.setVelocityX(-settings.playerSpeed);
+                player.setFlipX(true);
+                moving = true;
             } else if (keys.D.isDown || cursors.right.isDown) {
                 player.setVelocityX(settings.playerSpeed);
+                player.setFlipX(false);
+                moving = true;
             } else {
                 player.setVelocityX(0);
             }
 
             if ((keys.SPACE.isDown || cursors.up.isDown || keys.W.isDown) && player.body.touching.down) {
                 player.setVelocityY(-settings.jumpForce);
+            }
+
+            // Atualizar animações se for Stickman
+            if (currentGame.type === 'stickman') {
+                if (!player.body.touching.down) {
+                    player.play('jump', true);
+                } else if (moving) {
+                    player.play('walk', true);
+                } else {
+                    player.play('idle', true);
+                }
             }
         }
 
@@ -583,18 +682,6 @@
                 </div>
             `;
 
-            // Dificuldade
-            grid.innerHTML += `
-                <div class="editor-item">
-                    <label>Dificuldade</label>
-                    <select id="difficulty" onchange="updatePreview()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 5px;">
-                        <option value="easy" ${settings.difficulty === 'easy' ? 'selected' : ''}>Fácil</option>
-                        <option value="normal" ${settings.difficulty === 'normal' ? 'selected' : ''}>Normal</option>
-                        <option value="hard" ${settings.difficulty === 'hard' ? 'selected' : ''}>Difícil</option>
-                    </select>
-                </div>
-            `;
-
             // Adicionar listeners para atualizar valores
             document.getElementById('gravity').addEventListener('input', (e) => {
                 document.getElementById('gravityValue').textContent = e.target.value;
@@ -625,11 +712,26 @@
             ctx.fillRect(50, 300, 200, 30);
             ctx.fillRect(350, 250, 200, 30);
 
-            // Desenhar jogador
+            // Desenhar jogador (Preview simplificado)
             ctx.fillStyle = playerColor;
-            ctx.beginPath();
-            ctx.arc(100, 150, 20, 0, Math.PI * 2);
-            ctx.fill();
+            if (editingGame.type === 'stickman') {
+                // Desenhar boneco palito simples no preview
+                ctx.strokeStyle = playerColor;
+                ctx.lineWidth = 3;
+                let x = 100, y = 150;
+                ctx.beginPath();
+                ctx.arc(x, y - 15, 8, 0, Math.PI * 2);
+                ctx.moveTo(x, y - 7); ctx.lineTo(x, y + 10);
+                ctx.moveTo(x, y + 10); ctx.lineTo(x - 10, y + 25);
+                ctx.moveTo(x, y + 10); ctx.lineTo(x + 10, y + 25);
+                ctx.moveTo(x, y); ctx.lineTo(x - 15, y + 10);
+                ctx.moveTo(x, y); ctx.lineTo(x + 15, y + 10);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.arc(100, 150, 20, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
         // Salvar configurações
@@ -642,7 +744,6 @@
             editingGame.settings.gravity = parseInt(document.getElementById('gravity').value);
             editingGame.settings.playerSpeed = parseInt(document.getElementById('playerSpeed').value);
             editingGame.settings.jumpForce = parseInt(document.getElementById('jumpForce').value);
-            editingGame.settings.difficulty = document.getElementById('difficulty').value;
 
             alert('✅ Configurações salvas! Agora você pode jogar com as novas configurações.');
             cancelEdit();
