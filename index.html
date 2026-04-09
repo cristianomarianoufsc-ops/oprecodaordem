@@ -2,20 +2,24 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Game Launcher - Square Platformer</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
+            overflow-x: hidden;
         }
         
         .container {
@@ -35,25 +39,25 @@
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
         }
         
         .header h1 {
-            font-size: 48px;
+            font-size: 32px;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
         
         .header p {
-            font-size: 18px;
+            font-size: 16px;
             opacity: 0.9;
         }
         
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
         
         .game-card {
@@ -66,34 +70,34 @@
         }
         
         .game-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-5px);
             box-shadow: 0 15px 40px rgba(0,0,0,0.3);
         }
         
         .game-thumbnail {
             width: 100%;
-            height: 200px;
+            height: 150px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 60px;
+            font-size: 50px;
         }
         
         .game-info {
-            padding: 20px;
+            padding: 15px;
         }
         
         .game-info h3 {
-            font-size: 22px;
-            margin-bottom: 10px;
+            font-size: 20px;
+            margin-bottom: 8px;
             color: #333;
         }
         
         .game-info p {
             color: #666;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             font-size: 14px;
         }
         
@@ -104,13 +108,14 @@
         
         button {
             flex: 1;
-            padding: 10px 15px;
+            padding: 12px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             transition: background 0.3s;
             font-size: 14px;
+            touch-action: manipulation;
         }
         
         .btn-play {
@@ -134,10 +139,7 @@
         .btn-back {
             background: #e53e3e;
             color: white;
-        }
-        
-        .btn-back:hover {
-            background: #c53030;
+            margin-top: 10px;
         }
         
         /* GAME CONTAINER */
@@ -147,7 +149,10 @@
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            margin-bottom: 20px;
+            margin: 0 auto 10px;
+            width: 100%;
+            max-width: 1280px;
+            aspect-ratio: 16/9;
         }
         
         #gameContainer.active {
@@ -156,20 +161,74 @@
         
         canvas {
             display: block;
-            width: 100%;
-            height: auto;
+            width: 100% !important;
+            height: auto !important;
         }
         
-        .game-controls {
+        .game-ui {
             background: white;
-            padding: 20px;
-            border-radius: 0 0 15px 15px;
+            padding: 15px;
+            border-radius: 15px;
             text-align: center;
+            max-width: 1280px;
+            margin: 0 auto;
         }
         
-        .game-controls p {
+        .controls-info {
             color: #666;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        /* MOBILE CONTROLS */
+        #mobileControls {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            padding: 0 20px;
+            z-index: 1000;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        
+        .mobile-btn-group {
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+        
+        .m-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+            backdrop-filter: blur(5px);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .m-btn:active {
+            background: rgba(255, 255, 255, 0.8);
+            transform: scale(0.9);
+        }
+        
+        @media (max-width: 768px) {
+            #mobileControls.active {
+                display: flex;
+            }
+            .controls-info {
+                display: none;
+            }
+            .header h1 {
+                font-size: 28px;
+            }
         }
         
         /* EDITOR */
@@ -177,7 +236,7 @@
             display: none;
             background: white;
             border-radius: 15px;
-            padding: 30px;
+            padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         
@@ -185,108 +244,23 @@
             display: block;
         }
         
-        .editor-header {
-            margin-bottom: 30px;
-        }
-        
-        .editor-header h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        
         .editor-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
         }
         
         .editor-item {
             background: #f7fafc;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
             border: 2px solid #e2e8f0;
-        }
-        
-        .editor-item label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .editor-item input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e0;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        
-        .editor-item input[type="color"] {
-            height: 50px;
-            cursor: pointer;
-        }
-        
-        .editor-item input[type="range"] {
-            width: 100%;
-        }
-        
-        .editor-value {
-            margin-top: 5px;
-            color: #666;
-            font-size: 12px;
-        }
-        
-        .editor-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-        }
-        
-        .editor-buttons button {
-            flex: 1;
-            padding: 12px;
-            font-size: 16px;
-        }
-        
-        .btn-save {
-            background: #48bb78;
-            color: white;
-        }
-        
-        .btn-save:hover {
-            background: #38a169;
-        }
-        
-        .btn-cancel {
-            background: #cbd5e0;
-            color: #333;
-        }
-        
-        .btn-cancel:hover {
-            background: #a0aec0;
-        }
-        
-        /* PREVIEW */
-        .preview-container {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f7fafc;
-            border-radius: 10px;
-            border: 2px solid #e2e8f0;
-        }
-        
-        .preview-container h3 {
-            margin-bottom: 15px;
-            color: #333;
         }
         
         #previewCanvas {
             width: 100%;
-            max-width: 600px;
             height: auto;
-            border: 2px solid #cbd5e0;
             border-radius: 8px;
             background: #87ceeb;
         }
@@ -300,15 +274,25 @@
                 <h1>🎮 Game Launcher</h1>
                 <p>Selecione um jogo para jogar ou editar</p>
             </div>
-            
             <div class="games-grid" id="gamesGrid"></div>
         </div>
         
-        <!-- GAME CONTAINER -->
+        <!-- GAME AREA -->
         <div id="gameContainer"></div>
-        <div class="game-controls" id="gameControls" style="display: none;">
-            <p>Use <strong>WASD</strong> ou <strong>Setas</strong> para mover | <strong>ESPAÇO</strong> para pular</p>
+        <div class="game-ui" id="gameUI" style="display: none;">
+            <p class="controls-info">Use <strong>WASD</strong> ou <strong>Setas</strong> para mover | <strong>ESPAÇO</strong> para pular</p>
             <button class="btn-back" onclick="backToMenu()">← Voltar ao Menu</button>
+        </div>
+        
+        <!-- MOBILE CONTROLS -->
+        <div id="mobileControls">
+            <div class="mobile-btn-group">
+                <div class="m-btn" id="btnLeft">⬅️</div>
+                <div class="m-btn" id="btnRight">➡️</div>
+            </div>
+            <div class="mobile-btn-group">
+                <div class="m-btn" id="btnJump">⬆️</div>
+            </div>
         </div>
         
         <!-- EDITOR PANEL -->
@@ -317,16 +301,12 @@
                 <h2 id="editorTitle">Editar Jogo</h2>
                 <p id="editorDescription"></p>
             </div>
-            
             <div class="editor-grid" id="editorGrid"></div>
-            
             <div class="preview-container">
-                <h3>Preview</h3>
-                <canvas id="previewCanvas" width="600" height="400"></canvas>
+                <canvas id="previewCanvas" width="600" height="300"></canvas>
             </div>
-            
             <div class="editor-buttons">
-                <button class="btn-save" onclick="saveGameConfig()">💾 Salvar Alterações</button>
+                <button class="btn-save" onclick="saveGameConfig()">💾 Salvar</button>
                 <button class="btn-cancel" onclick="cancelEdit()">✕ Cancelar</button>
             </div>
         </div>
@@ -334,7 +314,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
     <script>
-        // Configurações dos jogos
         const gamesConfig = [
             {
                 id: 'blue-ball',
@@ -375,12 +354,29 @@
         let currentGame = null;
         let gameInstance = null;
         let editingGame = null;
+        
+        // Estado dos botões mobile
+        const mobileState = { left: false, right: false, jump: false };
 
-        // Renderizar grid de jogos
+        function setupMobileButtons() {
+            const bind = (id, key) => {
+                const el = document.getElementById(id);
+                const start = (e) => { e.preventDefault(); mobileState[key] = true; };
+                const end = (e) => { e.preventDefault(); mobileState[key] = false; };
+                el.addEventListener('touchstart', start);
+                el.addEventListener('touchend', end);
+                el.addEventListener('mousedown', start);
+                el.addEventListener('mouseup', end);
+                el.addEventListener('mouseleave', end);
+            };
+            bind('btnLeft', 'left');
+            bind('btnRight', 'right');
+            bind('btnJump', 'jump');
+        }
+
         function renderGamesGrid() {
             const grid = document.getElementById('gamesGrid');
             grid.innerHTML = '';
-
             gamesConfig.forEach(game => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
@@ -399,14 +395,17 @@
             });
         }
 
-        // Jogar jogo
         function playGame(gameId) {
             currentGame = gamesConfig.find(g => g.id === gameId);
             if (!currentGame) return;
 
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('gameContainer').classList.add('active');
-            document.getElementById('gameControls').style.display = 'block';
+            document.getElementById('gameUI').style.display = 'block';
+            
+            if (window.innerWidth <= 768) {
+                document.getElementById('mobileControls').classList.add('active');
+            }
 
             if (gameInstance) {
                 gameInstance.destroy(true);
@@ -418,6 +417,10 @@
                 width: 1280,
                 height: 720,
                 parent: 'gameContainer',
+                scale: {
+                    mode: Phaser.Scale.FIT,
+                    autoCenter: Phaser.Scale.CENTER_BOTH
+                },
                 physics: {
                     default: 'arcade',
                     arcade: {
@@ -425,68 +428,46 @@
                         debug: false,
                     },
                 },
-                scene: {
-                    preload: preload,
-                    create: create,
-                    update: update,
-                },
+                scene: { preload, create, update },
             };
 
             gameInstance = new Phaser.Game(config);
         }
 
-        // Phaser Functions
         function preload() {
             let graphics = this.make.graphics({ x: 0, y: 0, add: false });
             
-            // Textura da bola (Original)
+            // Textura da bola
             graphics.fillStyle(0xffffff);
             graphics.fillCircle(30, 30, 30);
             graphics.generateTexture('playerTexture', 60, 60);
             graphics.clear();
             
-            // Desenhar Stickman Spritesheet (64x64 por quadro)
-            // 0: Idle, 1: Walk 1, 2: Walk 2, 3: Jump
-            const frames = 4;
-            const fw = 64;
-            const fh = 64;
-            
-            for (let i = 0; i < frames; i++) {
+            // Stickman Spritesheet
+            const fw = 64, fh = 64;
+            for (let i = 0; i < 4; i++) {
                 graphics.lineStyle(4, 0xffffff);
-                let x = i * fw + fw/2;
-                let y = fh/2;
-                
-                // Cabeça
-                graphics.strokeCircle(x, y - 15, 10);
-                // Corpo
-                graphics.lineBetween(x, y - 5, x, y + 15);
-                
+                let x = i * fw + fw/2, y = fh/2;
+                graphics.strokeCircle(x, y - 15, 10); // Cabeça
+                graphics.lineBetween(x, y - 5, x, y + 15); // Corpo
                 if (i === 0) { // Idle
-                    graphics.lineBetween(x, y + 15, x - 10, y + 30); // Perna E
-                    graphics.lineBetween(x, y + 15, x + 10, y + 30); // Perna D
-                    graphics.lineBetween(x, y, x - 15, y + 10); // Braço E
-                    graphics.lineBetween(x, y, x + 15, y + 10); // Braço D
+                    graphics.lineBetween(x, y + 15, x - 10, y + 30); graphics.lineBetween(x, y + 15, x + 10, y + 30);
+                    graphics.lineBetween(x, y, x - 15, y + 10); graphics.lineBetween(x, y, x + 15, y + 10);
                 } else if (i === 1) { // Walk 1
-                    graphics.lineBetween(x, y + 15, x - 5, y + 30);
-                    graphics.lineBetween(x, y + 15, x + 15, y + 25);
-                    graphics.lineBetween(x, y, x - 10, y + 15);
-                    graphics.lineBetween(x, y, x + 10, y + 5);
+                    graphics.lineBetween(x, y + 15, x - 5, y + 30); graphics.lineBetween(x, y + 15, x + 15, y + 25);
+                    graphics.lineBetween(x, y, x - 10, y + 15); graphics.lineBetween(x, y, x + 10, y + 5);
                 } else if (i === 2) { // Walk 2
-                    graphics.lineBetween(x, y + 15, x + 5, y + 30);
-                    graphics.lineBetween(x, y + 15, x - 15, y + 25);
-                    graphics.lineBetween(x, y, x + 10, y + 15);
-                    graphics.lineBetween(x, y, x - 10, y + 5);
+                    graphics.lineBetween(x, y + 15, x + 5, y + 30); graphics.lineBetween(x, y + 15, x - 15, y + 25);
+                    graphics.lineBetween(x, y, x + 10, y + 15); graphics.lineBetween(x, y, x - 10, y + 5);
                 } else if (i === 3) { // Jump
-                    graphics.lineBetween(x, y + 15, x - 15, y + 10);
-                    graphics.lineBetween(x, y + 15, x + 15, y + 10);
-                    graphics.lineBetween(x, y, x - 20, y - 10);
-                    graphics.lineBetween(x, y, x + 20, y - 10);
+                    graphics.lineBetween(x, y + 15, x - 15, y + 10); graphics.lineBetween(x, y + 15, x + 15, y + 10);
+                    graphics.lineBetween(x, y, x - 20, y - 10); graphics.lineBetween(x, y, x + 20, y - 10);
                 }
             }
-            graphics.generateTexture('stickmanSheet', fw * frames, fh);
+            graphics.generateTexture('stickmanSheet', fw * 4, fh);
             graphics.clear();
             
-            // Textura da plataforma
+            // Plataforma
             graphics.fillStyle(0xffffff);
             graphics.fillRect(0, 0, 100, 20);
             graphics.generateTexture('platformTexture', 100, 20);
@@ -495,78 +476,39 @@
         function create() {
             const settings = currentGame.settings;
             const platforms = this.physics.add.staticGroup();
-            const worldWidth = 1280;
-            const worldHeight = 720;
+            const worldWidth = 1280, worldHeight = 720;
 
-            // Chão
             for (let x = 0; x < worldWidth; x += 100) {
-                platforms.create(x, worldHeight - 20, 'platformTexture')
-                    .setOrigin(0, 0)
-                    .refreshBody()
+                platforms.create(x, worldHeight - 20, 'platformTexture').setOrigin(0, 0).refreshBody()
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
             }
 
-            // Plataformas aleatórias
             for (let i = 0; i < settings.platformCount; i++) {
-                const x = 200 + Math.random() * (worldWidth - 400);
-                const y = 200 + Math.random() * (worldHeight - 400);
-                platforms.create(x, y, 'platformTexture')
-                    .setOrigin(0, 0)
-                    .refreshBody()
+                const x = 200 + Math.random() * (worldWidth - 400), y = 200 + Math.random() * (worldHeight - 400);
+                platforms.create(x, y, 'platformTexture').setOrigin(0, 0).refreshBody()
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
             }
 
-            // Criar jogador baseado no tipo
             if (currentGame.type === 'stickman') {
-                // Configurar animações do Stickman
-                if (!this.anims.exists('idle')) {
-                    this.anims.create({
-                        key: 'idle',
-                        frames: [{ key: 'stickmanSheet', frame: 0 }],
-                        frameRate: 1
-                    });
-                    this.anims.create({
-                        key: 'walk',
-                        frames: [
-                            { key: 'stickmanSheet', frame: 1 },
-                            { key: 'stickmanSheet', frame: 2 }
-                        ],
-                        frameRate: 8,
-                        repeat: -1
-                    });
-                    this.anims.create({
-                        key: 'jump',
-                        frames: [{ key: 'stickmanSheet', frame: 3 }],
-                        frameRate: 1
-                    });
-                }
-
-                // O Phaser precisa que a textura seja tratada como spritesheet se quisermos frames
-                // Mas como geramos dinamicamente, vamos usar setFrame manualmente ou recriar como atlas
-                // Simplificação: vamos usar o sprite e mudar o frame via clipping se necessário, 
-                // ou apenas usar a textura e setar o frame (precisamos definir os frames na textura gerada)
-                
-                // Correção: Para usar frames em textura gerada, precisamos adicionar frames manualmente
                 let tex = this.textures.get('stickmanSheet');
-                tex.add(0, 0, 0, 0, 64, 64);
-                tex.add(1, 0, 64, 0, 64, 64);
-                tex.add(2, 0, 128, 0, 64, 64);
-                tex.add(3, 0, 192, 0, 64, 64);
-
+                for(let i=0; i<4; i++) tex.add(i, 0, i*64, 0, 64, 64);
+                
+                if (!this.anims.exists('idle')) {
+                    this.anims.create({ key: 'idle', frames: [{ key: 'stickmanSheet', frame: 0 }], frameRate: 1 });
+                    this.anims.create({ key: 'walk', frames: [{ key: 'stickmanSheet', frame: 1 }, { key: 'stickmanSheet', frame: 2 }], frameRate: 8, repeat: -1 });
+                    this.anims.create({ key: 'jump', frames: [{ key: 'stickmanSheet', frame: 3 }], frameRate: 1 });
+                }
                 this.player = this.physics.add.sprite(100, 450, 'stickmanSheet', 0);
             } else {
                 this.player = this.physics.add.sprite(100, 450, 'playerTexture');
             }
 
-            this.player.setBounce(0.1);
-            this.player.setCollideWorldBounds(true);
-            this.player.setTint(Phaser.Display.Color.HexStringToColor(settings.playerColor).color);
+            this.player.setBounce(0.1).setCollideWorldBounds(true)
+                .setTint(Phaser.Display.Color.HexStringToColor(settings.playerColor).color);
 
             this.physics.add.collider(this.player, platforms);
-
             this.cursors = this.input.keyboard.createCursorKeys();
             this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
-
             this.cameras.main.setBackgroundColor(settings.backgroundColor);
             this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
             this.cameras.main.startFollow(this.player);
@@ -574,19 +516,14 @@
 
         function update() {
             if (!this.player) return;
-
-            const player = this.player;
-            const keys = this.keys;
-            const cursors = this.cursors;
-            const settings = currentGame.settings;
-
+            const player = this.player, keys = this.keys, cursors = this.cursors, settings = currentGame.settings;
             let moving = false;
 
-            if (keys.A.isDown || cursors.left.isDown) {
+            if (keys.A.isDown || cursors.left.isDown || mobileState.left) {
                 player.setVelocityX(-settings.playerSpeed);
                 player.setFlipX(true);
                 moving = true;
-            } else if (keys.D.isDown || cursors.right.isDown) {
+            } else if (keys.D.isDown || cursors.right.isDown || mobileState.right) {
                 player.setVelocityX(settings.playerSpeed);
                 player.setFlipX(false);
                 moving = true;
@@ -594,181 +531,76 @@
                 player.setVelocityX(0);
             }
 
-            if ((keys.SPACE.isDown || cursors.up.isDown || keys.W.isDown) && player.body.touching.down) {
+            if ((keys.SPACE.isDown || cursors.up.isDown || keys.W.isDown || mobileState.jump) && player.body.touching.down) {
                 player.setVelocityY(-settings.jumpForce);
             }
 
-            // Atualizar animações se for Stickman
             if (currentGame.type === 'stickman') {
-                if (!player.body.touching.down) {
-                    player.play('jump', true);
-                } else if (moving) {
-                    player.play('walk', true);
-                } else {
-                    player.play('idle', true);
-                }
+                if (!player.body.touching.down) player.play('jump', true);
+                else if (moving) player.play('walk', true);
+                else player.play('idle', true);
             }
         }
 
-        // Editar jogo
+        function backToMenu() {
+            document.getElementById('gameContainer').classList.remove('active');
+            document.getElementById('gameUI').style.display = 'none';
+            document.getElementById('mobileControls').classList.remove('active');
+            document.getElementById('mainMenu').classList.remove('hidden');
+            if (gameInstance) { gameInstance.destroy(true); gameInstance = null; }
+        }
+
         function editGame(gameId) {
             editingGame = gamesConfig.find(g => g.id === gameId);
             if (!editingGame) return;
-
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('editorPanel').classList.add('active');
-            document.getElementById('editorTitle').textContent = `Editar: ${editingGame.name}`;
-            document.getElementById('editorDescription').textContent = `Customize as configurações do seu jogo`;
-
             renderEditorGrid();
             updatePreview();
         }
 
-        // Renderizar grid do editor
         function renderEditorGrid() {
-            const grid = document.getElementById('editorGrid');
-            grid.innerHTML = '';
-
-            const settings = editingGame.settings;
-
-            // Cor do jogador
-            grid.innerHTML += `
-                <div class="editor-item">
-                    <label>Cor do Jogador</label>
-                    <input type="color" id="playerColor" value="${settings.playerColor}" onchange="updatePreview()">
-                </div>
+            const grid = document.getElementById('editorGrid'), s = editingGame.settings;
+            grid.innerHTML = `
+                <div class="editor-item"><label>Cor Jogador</label><input type="color" id="pCol" value="${s.playerColor}" onchange="updatePreview()"></div>
+                <div class="editor-item"><label>Cor Plataforma</label><input type="color" id="platCol" value="${s.platformColor}" onchange="updatePreview()"></div>
+                <div class="editor-item"><label>Cor Fundo</label><input type="color" id="bgCol" value="${s.backgroundColor}" onchange="updatePreview()"></div>
+                <div class="editor-item"><label>Gravidade</label><input type="range" id="grav" min="500" max="2000" value="${s.gravity}" onchange="updatePreview()"></div>
+                <div class="editor-item"><label>Velocidade</label><input type="range" id="speed" min="200" max="800" value="${s.playerSpeed}" onchange="updatePreview()"></div>
             `;
-
-            // Cor da plataforma
-            grid.innerHTML += `
-                <div class="editor-item">
-                    <label>Cor da Plataforma</label>
-                    <input type="color" id="platformColor" value="${settings.platformColor}" onchange="updatePreview()">
-                </div>
-            `;
-
-            // Cor do fundo
-            grid.innerHTML += `
-                <div class="editor-item">
-                    <label>Cor do Fundo</label>
-                    <input type="color" id="backgroundColor" value="${settings.backgroundColor}" onchange="updatePreview()">
-                </div>
-            `;
-
-            // Gravidade
-            grid.innerHTML += `
-                <div class="editor-item">
-                    <label>Gravidade</label>
-                    <input type="range" id="gravity" min="500" max="2000" value="${settings.gravity}" onchange="updatePreview()">
-                    <div class="editor-value">Valor: <span id="gravityValue">${settings.gravity}</span></div>
-                </div>
-            `;
-
-            // Velocidade do jogador
-            grid.innerHTML += `
-                <div class="editor-item">
-                    <label>Velocidade do Jogador</label>
-                    <input type="range" id="playerSpeed" min="200" max="800" value="${settings.playerSpeed}" onchange="updatePreview()">
-                    <div class="editor-value">Valor: <span id="playerSpeedValue">${settings.playerSpeed}</span></div>
-                </div>
-            `;
-
-            // Força do pulo
-            grid.innerHTML += `
-                <div class="editor-item">
-                    <label>Força do Pulo</label>
-                    <input type="range" id="jumpForce" min="400" max="1000" value="${settings.jumpForce}" onchange="updatePreview()">
-                    <div class="editor-value">Valor: <span id="jumpForceValue">${settings.jumpForce}</span></div>
-                </div>
-            `;
-
-            // Adicionar listeners para atualizar valores
-            document.getElementById('gravity').addEventListener('input', (e) => {
-                document.getElementById('gravityValue').textContent = e.target.value;
-            });
-            document.getElementById('playerSpeed').addEventListener('input', (e) => {
-                document.getElementById('playerSpeedValue').textContent = e.target.value;
-            });
-            document.getElementById('jumpForce').addEventListener('input', (e) => {
-                document.getElementById('jumpForceValue').textContent = e.target.value;
-            });
         }
 
-        // Atualizar preview
         function updatePreview() {
-            const canvas = document.getElementById('previewCanvas');
-            const ctx = canvas.getContext('2d');
-
-            const playerColor = document.getElementById('playerColor').value;
-            const platformColor = document.getElementById('platformColor').value;
-            const backgroundColor = document.getElementById('backgroundColor').value;
-
-            // Desenhar fundo
-            ctx.fillStyle = backgroundColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Desenhar plataformas
-            ctx.fillStyle = platformColor;
-            ctx.fillRect(50, 300, 200, 30);
-            ctx.fillRect(350, 250, 200, 30);
-
-            // Desenhar jogador (Preview simplificado)
-            ctx.fillStyle = playerColor;
+            const canvas = document.getElementById('previewCanvas'), ctx = canvas.getContext('2d');
+            const pCol = document.getElementById('pCol').value, platCol = document.getElementById('platCol').value, bgCol = document.getElementById('bgCol').value;
+            ctx.fillStyle = bgCol; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = platCol; ctx.fillRect(50, 250, 200, 20);
+            ctx.fillStyle = pCol;
             if (editingGame.type === 'stickman') {
-                // Desenhar boneco palito simples no preview
-                ctx.strokeStyle = playerColor;
-                ctx.lineWidth = 3;
-                let x = 100, y = 150;
-                ctx.beginPath();
-                ctx.arc(x, y - 15, 8, 0, Math.PI * 2);
-                ctx.moveTo(x, y - 7); ctx.lineTo(x, y + 10);
-                ctx.moveTo(x, y + 10); ctx.lineTo(x - 10, y + 25);
-                ctx.moveTo(x, y + 10); ctx.lineTo(x + 10, y + 25);
-                ctx.moveTo(x, y); ctx.lineTo(x - 15, y + 10);
-                ctx.moveTo(x, y); ctx.lineTo(x + 15, y + 10);
-                ctx.stroke();
+                ctx.strokeStyle = pCol; ctx.lineWidth = 3; let x = 100, y = 150;
+                ctx.beginPath(); ctx.arc(x, y - 15, 8, 0, Math.PI * 2); ctx.moveTo(x, y - 7); ctx.lineTo(x, y + 10);
+                ctx.moveTo(x, y + 10); ctx.lineTo(x - 10, y + 25); ctx.moveTo(x, y + 10); ctx.lineTo(x + 10, y + 25);
+                ctx.moveTo(x, y); ctx.lineTo(x - 15, y + 10); ctx.moveTo(x, y); ctx.lineTo(x + 15, y + 10); ctx.stroke();
             } else {
-                ctx.beginPath();
-                ctx.arc(100, 150, 20, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(100, 150, 20, 0, Math.PI * 2); ctx.fill();
             }
         }
 
-        // Salvar configurações
         function saveGameConfig() {
-            if (!editingGame) return;
-
-            editingGame.settings.playerColor = document.getElementById('playerColor').value;
-            editingGame.settings.platformColor = document.getElementById('platformColor').value;
-            editingGame.settings.backgroundColor = document.getElementById('backgroundColor').value;
-            editingGame.settings.gravity = parseInt(document.getElementById('gravity').value);
-            editingGame.settings.playerSpeed = parseInt(document.getElementById('playerSpeed').value);
-            editingGame.settings.jumpForce = parseInt(document.getElementById('jumpForce').value);
-
-            alert('✅ Configurações salvas! Agora você pode jogar com as novas configurações.');
+            editingGame.settings.playerColor = document.getElementById('pCol').value;
+            editingGame.settings.platformColor = document.getElementById('platCol').value;
+            editingGame.settings.backgroundColor = document.getElementById('bgCol').value;
+            editingGame.settings.gravity = parseInt(document.getElementById('grav').value);
+            editingGame.settings.playerSpeed = parseInt(document.getElementById('speed').value);
             cancelEdit();
         }
 
-        // Cancelar edição
         function cancelEdit() {
             document.getElementById('editorPanel').classList.remove('active');
             document.getElementById('mainMenu').classList.remove('hidden');
-            editingGame = null;
         }
 
-        // Voltar ao menu
-        function backToMenu() {
-            document.getElementById('gameContainer').classList.remove('active');
-            document.getElementById('gameControls').style.display = 'none';
-            document.getElementById('mainMenu').classList.remove('hidden');
-
-            if (gameInstance) {
-                gameInstance.destroy(true);
-                gameInstance = null;
-            }
-        }
-
-        // Inicializar
+        setupMobileButtons();
         renderGamesGrid();
     </script>
 </body>
