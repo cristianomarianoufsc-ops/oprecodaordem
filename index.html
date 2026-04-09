@@ -501,17 +501,6 @@
                 player.setVelocityY(-settings.jumpForce);
             }
         }
- else if (keys.d.isDown || cursors.right.isDown) {
-                    player.setVelocityX(currentGame.settings.playerSpeed);
-                } else {
-                    player.setVelocityX(0);
-                }
-
-                if ((keys.space.isDown || cursors.up.isDown) && player.body.touching.down) {
-                    player.setVelocityY(-currentGame.settings.jumpForce);
-                }
-            }
-        }
 
         // Editar jogo
         function editGame(gameId) {
