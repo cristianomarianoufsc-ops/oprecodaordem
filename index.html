@@ -376,65 +376,60 @@
                 <h3>🎨 Cores e Física</h3>
                 <div class="editor-grid" id="editorGrid"></div>
             </div>
-            
+
             <!-- SEÇÃO DE ANIMAÇÕES -->
             <div class="editor-section">
-                <h3>🏃‍♂️ Animações do Personagem</h3>
-                <p style="font-size: 12px; color: #666; margin-bottom: 15px;">
-                    Faça upload de sprites para cada estado. Para a corrida, use uma spritesheet horizontal.
-                </p>
-                
+                <h3>🏃 Animações do Personagem</h3>
+                <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Faça upload de sprites para cada estado. Para a corrida, use uma spritesheet horizontal.</p>
                 <div class="asset-slots">
-                    <!-- IDLE SLOT -->
+                    <!-- IDLE -->
                     <div class="asset-slot">
                         <h4>Parado (Idle)</h4>
                         <div class="slot-preview" id="preview-idle"><span>Vazio</span></div>
                         <div class="slot-controls">
-                            <label class="btn-upload-slot" for="input-idle">Upload PNG</label>
-                            <input type="file" id="input-idle" accept="image/*" onchange="handleSlotUpload('idle', event)">
-                            <button class="btn-remove-asset" onclick="removeSlot('idle')" style="padding: 4px; font-size: 10px;">Remover</button>
+                            <label class="btn-upload-slot" for="upload-idle">Upload PNG</label>
+                            <input type="file" id="upload-idle" accept="image/*" onchange="handleSlotUpload('idle', event)">
+                            <button style="background:#edf2f7; color:#4a5568; font-size:10px; padding:4px;" onclick="removeSlot('idle')">Remover</button>
                         </div>
                     </div>
-                    
-                    <!-- RUN SLOT -->
+                    <!-- RUN -->
                     <div class="asset-slot">
                         <h4>Correndo (Run)</h4>
                         <div class="slot-preview" id="preview-run"><span>Vazio</span></div>
                         <div class="slot-controls">
-                            <label class="btn-upload-slot" for="input-run">Upload Spritesheet</label>
-                            <input type="file" id="input-run" accept="image/*" onchange="handleSlotUpload('run', event)">
+                            <label class="btn-upload-slot" for="upload-run">Upload Spritesheet</label>
+                            <input type="file" id="upload-run" accept="image/*" onchange="handleSlotUpload('run', event)">
                             <div class="frame-config">
                                 <label>Quadros:</label>
-                                <input type="number" id="frames-run" min="1" max="24" value="1" onchange="updateFrameCount('run', this.value)">
+                                <input type="number" id="frames-run" value="1" min="1" onchange="updateFrameCount('run', this.value)">
                             </div>
-                            <button class="btn-remove-asset" onclick="removeSlot('run')" style="padding: 4px; font-size: 10px;">Remover</button>
+                            <button style="background:#edf2f7; color:#4a5568; font-size:10px; padding:4px;" onclick="removeSlot('run')">Remover</button>
                         </div>
                     </div>
-                    
-                    <!-- JUMP SLOT -->
+                    <!-- JUMP -->
                     <div class="asset-slot">
                         <h4>Pulando (Jump)</h4>
                         <div class="slot-preview" id="preview-jump"><span>Vazio</span></div>
                         <div class="slot-controls">
-                            <label class="btn-upload-slot" for="input-jump">Upload PNG</label>
-                            <input type="file" id="input-jump" accept="image/*" onchange="handleSlotUpload('jump', event)">
-                            <button class="btn-remove-asset" onclick="removeSlot('jump')" style="padding: 4px; font-size: 10px;">Remover</button>
+                            <label class="btn-upload-slot" for="upload-jump">Upload PNG</label>
+                            <input type="file" id="upload-jump" accept="image/*" onchange="handleSlotUpload('jump', event)">
+                            <button style="background:#edf2f7; color:#4a5568; font-size:10px; padding:4px;" onclick="removeSlot('jump')">Remover</button>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="editor-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn-edit" onclick="saveGameConfig()" style="background: #48bb78;">💾 Salvar</button>
-                <button class="btn-back" onclick="cancelEdit()" style="width: 100%; margin-top: 0;">✕ Cancelar</button>
+            <div class="game-buttons">
+                <button class="btn-edit" onclick="saveEditor()">💾 Salvar</button>
+                <button class="btn-back" onclick="closeEditor()">✕ Cancelar</button>
             </div>
         </div>
-
-        <!-- GAME AREA -->
+        
+        <!-- GAME VIEW -->
         <div id="gameContainer"></div>
-        <div class="game-ui" id="gameUI" style="display: none;">
-            <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Controles Mobile ativos na tela</p>
-            <button class="btn-back" onclick="backToMenu()" style="width: 100%;">← Voltar ao Menu</button>
+        <div id="gameUI" class="game-ui" style="display: none;">
+            <p id="gameInstructions">Use WASD ou Setas para mover | ESPAÇO para pular</p>
+            <button class="btn-back" onclick="exitGame()">← Voltar ao Menu</button>
         </div>
         
         <!-- MOBILE CONTROLS -->
@@ -449,56 +444,47 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
     <script>
-        // Carregar configurações do LocalStorage ou usar padrão
-        const savedConfigs = JSON.parse(localStorage.getItem('gamesConfig') || 'null');
-        const gamesConfig = savedConfigs || [
+        // CONFIGURAÇÕES DOS JOGOS
+        const DEFAULT_GAMES = [
             {
-                id: 'blue-ball',
+                id: 'original',
                 name: 'Blue Ball Platformer',
                 description: 'Pule sobre as plataformas com a bola azul (Original)',
                 emoji: '🔵',
                 type: 'ball',
                 settings: {
-                    playerColor: '#0000ff',
-                    platformColor: '#8b7355',
-                    backgroundColor: '#87ceeb',
-                    gravity: 1050,
-                    playerSpeed: 400,
-                    jumpForce: 717,
-                    platformCount: 3
+                    playerColor: '#3498db',
+                    platformColor: '#7f8c8d',
+                    backgroundColor: '#ecf0f1',
+                    playerSpeed: 300,
+                    jumpForce: 500,
+                    gravity: 1000,
+                    platformCount: 8
                 },
-                assets: {
-                    idle: null,
-                    run: null,
-                    jump: null,
-                    runFrames: 1
-                }
+                assets: { idle: null, run: null, jump: null, runFrames: 1 }
             },
             {
-                id: 'custom-game',
+                id: 'custom',
                 name: 'Custom Platformer',
-                description: 'Uma cópia com Boneco Palito ou seu Sprite customizado!',
+                description: 'Uma cópia com Boneco Palito animado!',
                 emoji: '🛠️',
                 type: 'stickman',
                 settings: {
-                    playerColor: '#ff0000',
-                    platformColor: '#4a5568',
-                    backgroundColor: '#a0aec0',
-                    gravity: 1050,
-                    playerSpeed: 400,
-                    jumpForce: 717,
-                    platformCount: 5
+                    playerColor: '#e74c3c',
+                    platformColor: '#2c3e50',
+                    backgroundColor: '#87CEEB',
+                    playerSpeed: 350,
+                    jumpForce: 550,
+                    gravity: 1200,
+                    platformCount: 10
                 },
-                assets: {
-                    idle: null,
-                    run: null,
-                    jump: null,
-                    runFrames: 1
-                }
+                assets: { idle: null, run: null, jump: null, runFrames: 1 }
             }
         ];
+
+        let gamesConfig = JSON.parse(localStorage.getItem('gamesConfig')) || DEFAULT_GAMES;
 
         let currentGame = null;
         let gameInstance = null;
@@ -549,6 +535,7 @@
         function setupMobileButtons() {
             const bind = (id, key) => {
                 const el = document.getElementById(id);
+                if (!el) return;
                 const start = (e) => { e.preventDefault(); mobileState[key] = true; };
                 const end = (e) => { e.preventDefault(); mobileState[key] = false; };
                 el.addEventListener('touchstart', start); el.addEventListener('touchend', end);
@@ -585,14 +572,18 @@
             document.getElementById('gameUI').style.display = 'block';
             if (window.innerWidth <= 768) document.getElementById('mobileControls').classList.add('active');
 
-            if (gameInstance) gameInstance.destroy(true);
+            if (gameInstance) {
+                gameInstance.destroy(true);
+                gameInstance = null;
+            }
             
             const config = {
                 type: Phaser.AUTO,
                 width: 1280, height: 720,
                 parent: 'gameContainer',
+                backgroundColor: currentGame.settings.backgroundColor,
                 scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-                physics: { default: 'arcade', arcade: { gravity: { y: currentGame.settings.gravity } } },
+                physics: { default: 'arcade', arcade: { gravity: { y: currentGame.settings.gravity }, debug: false } },
                 scene: { preload, create, update },
             };
             gameInstance = new Phaser.Game(config);
@@ -601,21 +592,7 @@
         function preload() {
             const assets = currentGame.assets;
             
-            // Carregar Assets do Usuário
-            if (assets.idle) this.load.image('user_idle', assets.idle);
-            if (assets.jump) this.load.image('user_jump', assets.jump);
-            if (assets.run) {
-                // Para carregar a spritesheet dinamicamente, precisamos saber a largura da imagem.
-                // Como é base64, criaremos um objeto Image temporário para obter as dimensões.
-                const img = new Image();
-                img.src = assets.run;
-                img.onload = () => {
-                    const frameWidth = Math.floor(img.width / (assets.runFrames || 1));
-                    this.textures.addSpriteSheet('user_run', img, { frameWidth: frameWidth, frameHeight: img.height });
-                };
-            }
-
-            // Gerar Texturas Padrão (Fallback)
+            // Gerar Texturas Padrão (Fallback) - Sempre geramos para evitar erros de textura faltando
             let graphics = this.make.graphics({ x: 0, y: 0, add: false });
             graphics.fillStyle(0xffffff); graphics.fillCircle(30, 30, 30);
             graphics.generateTexture('playerTexture', 60, 60);
@@ -646,6 +623,14 @@
             
             graphics.fillStyle(0xffffff); graphics.fillRect(0, 0, 100, 20);
             graphics.generateTexture('platformTexture', 100, 20);
+
+            // Carregar Assets do Usuário de forma segura
+            if (assets.idle) this.load.image('user_idle', assets.idle);
+            if (assets.jump) this.load.image('user_jump', assets.jump);
+            if (assets.run) {
+                // Para spritesheets base64, usamos a API de Textures do Phaser no Create
+                this.load.image('user_run_raw', assets.run);
+            }
         }
 
         function create() {
@@ -656,21 +641,28 @@
 
             // Criar Chão e Plataformas
             for (let x = 0; x < worldWidth; x += 100) {
-                platforms.create(x, worldHeight - 20, 'platformTexture').setOrigin(0, 0).refreshBody()
+                platforms.create(x, worldHeight - 10, 'platformTexture').setScale(1, 1).refreshBody()
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
             }
 
             for (let i = 0; i < settings.platformCount; i++) {
                 const x = 200 + Math.random() * (worldWidth - 400), y = 200 + Math.random() * (worldHeight - 400);
-                platforms.create(x, y, 'platformTexture').setOrigin(0, 0).refreshBody()
+                platforms.create(x, y, 'platformTexture').refreshBody()
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
             }
 
             // --- Lógica de Animações Customizadas ---
-            if (assets.run && this.textures.exists('user_run')) {
+            if (assets.run && this.textures.exists('user_run_raw')) {
+                const runTex = this.textures.get('user_run_raw').getSourceImage();
+                const frameWidth = Math.floor(runTex.width / (assets.runFrames || 1));
+                const frameHeight = runTex.height;
+                
+                // Criar a spritesheet a partir da imagem carregada
+                this.textures.addSpriteSheet('user_run', runTex, { frameWidth, frameHeight });
+                
                 this.anims.create({
                     key: 'c_walk',
-                    frames: this.anims.generateFrameNumbers('user_run', { start: 0, end: assets.runFrames - 1 }),
+                    frames: this.anims.generateFrameNumbers('user_run', { start: 0, end: (assets.runFrames || 1) - 1 }),
                     frameRate: 10,
                     repeat: -1
                 });
@@ -694,7 +686,7 @@
 
             this.player.setBounce(0.1).setCollideWorldBounds(true);
             
-            // Só aplicar Tint se não houver asset customizado (para não estragar as cores do pixel art)
+            // Só aplicar Tint se não houver asset customizado
             if (!assets.idle && !assets.run) {
                 this.player.setTint(Phaser.Display.Color.HexStringToColor(settings.playerColor).color);
             }
@@ -702,7 +694,6 @@
             this.physics.add.collider(this.player, platforms);
             this.cursors = this.input.keyboard.createCursorKeys();
             this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
-            this.cameras.main.setBackgroundColor(settings.backgroundColor);
             this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
             this.cameras.main.startFollow(this.player);
         }
@@ -730,17 +721,16 @@
             const onGround = player.body.touching.down;
             
             if (assets.idle || assets.run || assets.jump) {
-                // Lógica para Assets Customizados
                 if (!onGround && assets.jump) {
                     player.setTexture('user_jump');
+                    if (player.anims.isPlaying) player.anims.stop();
                 } else if (moving && assets.run && this.textures.exists('user_run')) {
                     player.play('c_walk', true);
                 } else if (assets.idle) {
                     player.setTexture('user_idle');
-                    player.anims.stop();
+                    if (player.anims.isPlaying) player.anims.stop();
                 }
             } else if (currentGame.type === 'stickman') {
-                // Lógica Fallback Boneco Palito
                 if (!onGround) player.play('jump', true);
                 else if (moving) player.play('walk', true);
                 else player.play('idle', true);
@@ -751,53 +741,68 @@
             editingGame = JSON.parse(JSON.stringify(gamesConfig.find(g => g.id === gameId)));
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('editorPanel').classList.add('active');
-            document.getElementById('editorTitle').textContent = `Editar: ${editingGame.name}`;
-            renderEditorGrid();
+            document.getElementById('editorTitle').innerText = `Editar: ${editingGame.name}`;
+            
+            const grid = document.getElementById('editorGrid');
+            grid.innerHTML = '';
+            
+            const settingsMap = [
+                { key: 'playerColor', label: 'Cor Jogador (Fallback)', type: 'color' },
+                { key: 'platformColor', label: 'Cor Plataforma', type: 'color' },
+                { key: 'backgroundColor', label: 'Cor Fundo', type: 'color' },
+                { key: 'gravity', label: 'Gravidade', type: 'range', min: 500, max: 3000 },
+                { key: 'playerSpeed', label: 'Velocidade', type: 'range', min: 100, max: 800 }
+            ];
+
+            settingsMap.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'editor-item';
+                item.innerHTML = `
+                    <label>${s.label}</label>
+                    <input type="${s.type}" value="${editingGame.settings[s.key]}" 
+                        ${s.min ? `min="${s.min}"` : ''} ${s.max ? `max="${s.max}"` : ''}
+                        onchange="updateSetting('${s.key}', this.value)">
+                `;
+                grid.appendChild(item);
+            });
+            
             renderSlotPreviews();
         }
 
-        function renderEditorGrid() {
-            const grid = document.getElementById('editorGrid'), s = editingGame.settings;
-            grid.innerHTML = `
-                <div class="editor-item"><label>Cor Jogador (Fallback)</label><input type="color" id="pCol" value="${s.playerColor}"></div>
-                <div class="editor-item"><label>Cor Plataforma</label><input type="color" id="platCol" value="${s.platformColor}"></div>
-                <div class="editor-item"><label>Cor Fundo</label><input type="color" id="bgCol" value="${s.backgroundColor}"></div>
-                <div class="editor-item"><label>Gravidade</label><input type="range" id="grav" min="500" max="2000" value="${s.gravity}"></div>
-                <div class="editor-item"><label>Velocidade</label><input type="range" id="speed" min="200" max="800" value="${s.playerSpeed}"></div>
-            `;
+        function updateSetting(key, val) {
+            if (editingGame) {
+                editingGame.settings[key] = (key === 'gravity' || key === 'playerSpeed') ? parseInt(val) : val;
+            }
         }
 
-        function saveGameConfig() {
-            editingGame.settings.playerColor = document.getElementById('pCol').value;
-            editingGame.settings.platformColor = document.getElementById('platCol').value;
-            editingGame.settings.backgroundColor = document.getElementById('bgCol').value;
-            editingGame.settings.gravity = parseInt(document.getElementById('grav').value);
-            editingGame.settings.playerSpeed = parseInt(document.getElementById('speed').value);
-            
-            const idx = gamesConfig.findIndex(g => g.id === editingGame.id);
-            gamesConfig[idx] = editingGame;
-            
+        function saveEditor() {
+            const index = gamesConfig.findIndex(g => g.id === editingGame.id);
+            gamesConfig[index] = editingGame;
             localStorage.setItem('gamesConfig', JSON.stringify(gamesConfig));
-            alert('✅ Configurações e Animações salvas!');
-            cancelEdit();
+            closeEditor();
+            renderGamesGrid();
         }
 
-        function cancelEdit() {
+        function closeEditor() {
+            editingGame = null;
             document.getElementById('editorPanel').classList.remove('active');
             document.getElementById('mainMenu').classList.remove('hidden');
-            editingGame = null;
         }
 
-        function backToMenu() {
+        function exitGame() {
+            if (gameInstance) {
+                gameInstance.destroy(true);
+                gameInstance = null;
+            }
             document.getElementById('gameContainer').classList.remove('active');
             document.getElementById('gameUI').style.display = 'none';
             document.getElementById('mobileControls').classList.remove('active');
             document.getElementById('mainMenu').classList.remove('hidden');
-            if (gameInstance) { gameInstance.destroy(true); gameInstance = null; }
         }
 
-        setupMobileButtons();
+        // INICIALIZAÇÃO
         renderGamesGrid();
+        setupMobileButtons();
     </script>
 </body>
 </html>
