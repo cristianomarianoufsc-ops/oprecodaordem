@@ -455,7 +455,6 @@
                 emoji: '🔵',
                 type: 'ball',
                 settings: {
-                    playerColor: '#3498db',
                     platformColor: '#7f8c8d',
                     backgroundColor: '#ecf0f1',
                     playerSpeed: 300,
@@ -472,7 +471,6 @@
                 emoji: '🛠️',
                 type: 'stickman',
                 settings: {
-                    playerColor: '#e74c3c',
                     platformColor: '#2c3e50',
                     backgroundColor: '#87CEEB',
                     playerSpeed: 350,
@@ -531,6 +529,27 @@
             document.getElementById('frames-run').value = editingGame.assets.runFrames || 1;
         }
 
+        // --- BLOB URL HELPER ---
+        // Converte base64 para Blob URL para evitar erro "Local data URIs are not supported"
+        function base64ToBlobUrl(base64) {
+            if (!base64 || !base64.startsWith('data:')) return null;
+            try {
+                const parts = base64.split(';base64,');
+                const contentType = parts[0].split(':')[1];
+                const raw = window.atob(parts[1]);
+                const rawLength = raw.length;
+                const uInt8Array = new Uint8Array(rawLength);
+                for (let i = 0; i < rawLength; ++i) {
+                    uInt8Array[i] = raw.charCodeAt(i);
+                }
+                const blob = new Blob([uInt8Array], { type: contentType });
+                return URL.createObjectURL(blob);
+            } catch (e) {
+                console.error("Erro ao converter base64 para Blob:", e);
+                return null;
+            }
+        }
+
         // --- GAME LOGIC ---
         function setupMobileButtons() {
             const bind = (id, key) => {
@@ -582,6 +601,8 @@
                 width: 1280, height: 720,
                 parent: 'gameContainer',
                 backgroundColor: currentGame.settings.backgroundColor,
+                pixelArt: true, // Garante que pixel art fique nítida
+                render: { pixelArt: true, antialias: false },
                 scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
                 physics: { default: 'arcade', arcade: { gravity: { y: currentGame.settings.gravity }, debug: false } },
                 scene: { preload, create, update },
@@ -592,7 +613,7 @@
         function preload() {
             const assets = currentGame.assets;
             
-            // Gerar Texturas Padrão (Fallback) - Sempre geramos para evitar erros de textura faltando
+            // Gerar Texturas Fallback
             let graphics = this.make.graphics({ x: 0, y: 0, add: false });
             graphics.fillStyle(0xffffff); graphics.fillCircle(30, 30, 30);
             graphics.generateTexture('playerTexture', 60, 60);
@@ -624,13 +645,15 @@
             graphics.fillStyle(0xffffff); graphics.fillRect(0, 0, 100, 20);
             graphics.generateTexture('platformTexture', 100, 20);
 
-            // Carregar Assets do Usuário de forma segura
-            if (assets.idle) this.load.image('user_idle', assets.idle);
-            if (assets.jump) this.load.image('user_jump', assets.jump);
-            if (assets.run) {
-                // Para spritesheets base64, usamos a API de Textures do Phaser no Create
-                this.load.image('user_run_raw', assets.run);
-            }
+            // Carregar Assets via Blob URL para evitar erro de segurança
+            const idleBlob = base64ToBlobUrl(assets.idle);
+            if (idleBlob) this.load.image('user_idle', idleBlob);
+            
+            const jumpBlob = base64ToBlobUrl(assets.jump);
+            if (jumpBlob) this.load.image('user_jump', jumpBlob);
+            
+            const runBlob = base64ToBlobUrl(assets.run);
+            if (runBlob) this.load.image('user_run_raw', runBlob);
         }
 
         function create() {
@@ -652,12 +675,11 @@
             }
 
             // --- Lógica de Animações Customizadas ---
-            if (assets.run && this.textures.exists('user_run_raw')) {
+            if (this.textures.exists('user_run_raw')) {
                 const runTex = this.textures.get('user_run_raw').getSourceImage();
                 const frameWidth = Math.floor(runTex.width / (assets.runFrames || 1));
                 const frameHeight = runTex.height;
                 
-                // Criar a spritesheet a partir da imagem carregada
                 this.textures.addSpriteSheet('user_run', runTex, { frameWidth, frameHeight });
                 
                 this.anims.create({
@@ -669,7 +691,7 @@
             }
 
             // Criar Jogador
-            if (assets.idle) {
+            if (this.textures.exists('user_idle')) {
                 this.player = this.physics.add.sprite(100, 450, 'user_idle');
             } else if (currentGame.type === 'stickman') {
                 let tex = this.textures.get('stickmanSheet');
@@ -682,15 +704,11 @@
                 this.player = this.physics.add.sprite(100, 450, 'stickmanSheet', 0);
             } else {
                 this.player = this.physics.add.sprite(100, 450, 'playerTexture');
+                this.player.setTint(0x3498db); // Cor padrão se for bola
             }
 
             this.player.setBounce(0.1).setCollideWorldBounds(true);
             
-            // Só aplicar Tint se não houver asset customizado
-            if (!assets.idle && !assets.run) {
-                this.player.setTint(Phaser.Display.Color.HexStringToColor(settings.playerColor).color);
-            }
-
             this.physics.add.collider(this.player, platforms);
             this.cursors = this.input.keyboard.createCursorKeys();
             this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
@@ -720,13 +738,13 @@
             // --- Gerenciamento de Animação ---
             const onGround = player.body.touching.down;
             
-            if (assets.idle || assets.run || assets.jump) {
-                if (!onGround && assets.jump) {
+            if (this.textures.exists('user_idle') || this.textures.exists('user_run') || this.textures.exists('user_jump')) {
+                if (!onGround && this.textures.exists('user_jump')) {
                     player.setTexture('user_jump');
                     if (player.anims.isPlaying) player.anims.stop();
-                } else if (moving && assets.run && this.textures.exists('user_run')) {
+                } else if (moving && this.textures.exists('user_run')) {
                     player.play('c_walk', true);
-                } else if (assets.idle) {
+                } else if (this.textures.exists('user_idle')) {
                     player.setTexture('user_idle');
                     if (player.anims.isPlaying) player.anims.stop();
                 }
@@ -747,7 +765,6 @@
             grid.innerHTML = '';
             
             const settingsMap = [
-                { key: 'playerColor', label: 'Cor Jogador (Fallback)', type: 'color' },
                 { key: 'platformColor', label: 'Cor Plataforma', type: 'color' },
                 { key: 'backgroundColor', label: 'Cor Fundo', type: 'color' },
                 { key: 'gravity', label: 'Gravidade', type: 'range', min: 500, max: 3000 },
