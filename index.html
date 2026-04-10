@@ -198,54 +198,81 @@
         }
         
         /* ASSETS IN EDITOR */
-        .asset-upload-area {
+        .asset-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .asset-slot {
+            background: #f7fafc;
             border: 2px dashed #cbd5e0;
             border-radius: 10px;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
-            margin-bottom: 15px;
-            cursor: pointer;
-            background: #f7fafc;
+            position: relative;
         }
         
-        .asset-preview-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
+        .asset-slot h4 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #4a5568;
         }
         
-        .asset-item {
-            border: 1px solid #e2e8f0;
+        .slot-preview {
+            width: 100%;
+            height: 80px;
+            background: #edf2f7;
             border-radius: 8px;
-            padding: 5px;
-            text-align: center;
-            background: white;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
         
-        .asset-item img {
-            width: 100%;
-            height: 60px;
+        .slot-preview img {
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
-            background: #f7fafc;
-            border-radius: 5px;
         }
         
-        .asset-item span {
-            font-size: 10px;
-            display: block;
-            margin-top: 5px;
-            color: #333;
-            font-weight: bold;
+        .slot-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
         
-        .btn-remove-asset {
-            background: #e53e3e;
+        .slot-controls input[type="file"] {
+            display: none;
+        }
+        
+        .btn-upload-slot {
+            background: #667eea;
             color: white;
-            padding: 6px;
-            font-size: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .frame-config {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin-top: 5px;
-            width: 100%;
-            border-radius: 4px;
+        }
+        
+        .frame-config label {
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        
+        .frame-config input {
+            width: 50px;
+            padding: 4px;
+            font-size: 11px;
         }
         
         /* GAME CONTAINER */
@@ -341,7 +368,7 @@
         <div id="editorPanel">
             <div class="header" style="color: #333;">
                 <h2 id="editorTitle">Editar Jogo</h2>
-                <p id="editorDescription">Ajuste as cores e faça upload de sprites</p>
+                <p id="editorDescription">Ajuste as cores e as animações do personagem</p>
             </div>
             
             <!-- SEÇÃO DE CORES -->
@@ -350,17 +377,51 @@
                 <div class="editor-grid" id="editorGrid"></div>
             </div>
             
-            <!-- SEÇÃO DE ASSETS -->
+            <!-- SEÇÃO DE ANIMAÇÕES -->
             <div class="editor-section">
-                <h3>📤 Sprites do Jogo</h3>
+                <h3>🏃‍♂️ Animações do Personagem</h3>
                 <p style="font-size: 12px; color: #666; margin-bottom: 15px;">
-                    Faça upload de sprites específicos para este jogo. Use o nome <strong>player</strong> para o personagem.
+                    Faça upload de sprites para cada estado. Para a corrida, use uma spritesheet horizontal.
                 </p>
-                <div class="asset-upload-area" onclick="document.getElementById('assetInput').click()">
-                    <span style="font-size: 14px; color: #333; font-weight: bold;">Clique para selecionar imagens</span>
-                    <input type="file" id="assetInput" style="display: none" accept="image/*" multiple onchange="handleAssetUpload(event)">
+                
+                <div class="asset-slots">
+                    <!-- IDLE SLOT -->
+                    <div class="asset-slot">
+                        <h4>Parado (Idle)</h4>
+                        <div class="slot-preview" id="preview-idle"><span>Vazio</span></div>
+                        <div class="slot-controls">
+                            <label class="btn-upload-slot" for="input-idle">Upload PNG</label>
+                            <input type="file" id="input-idle" accept="image/*" onchange="handleSlotUpload('idle', event)">
+                            <button class="btn-remove-asset" onclick="removeSlot('idle')" style="padding: 4px; font-size: 10px;">Remover</button>
+                        </div>
+                    </div>
+                    
+                    <!-- RUN SLOT -->
+                    <div class="asset-slot">
+                        <h4>Correndo (Run)</h4>
+                        <div class="slot-preview" id="preview-run"><span>Vazio</span></div>
+                        <div class="slot-controls">
+                            <label class="btn-upload-slot" for="input-run">Upload Spritesheet</label>
+                            <input type="file" id="input-run" accept="image/*" onchange="handleSlotUpload('run', event)">
+                            <div class="frame-config">
+                                <label>Quadros:</label>
+                                <input type="number" id="frames-run" min="1" max="24" value="1" onchange="updateFrameCount('run', this.value)">
+                            </div>
+                            <button class="btn-remove-asset" onclick="removeSlot('run')" style="padding: 4px; font-size: 10px;">Remover</button>
+                        </div>
+                    </div>
+                    
+                    <!-- JUMP SLOT -->
+                    <div class="asset-slot">
+                        <h4>Pulando (Jump)</h4>
+                        <div class="slot-preview" id="preview-jump"><span>Vazio</span></div>
+                        <div class="slot-controls">
+                            <label class="btn-upload-slot" for="input-jump">Upload PNG</label>
+                            <input type="file" id="input-jump" accept="image/*" onchange="handleSlotUpload('jump', event)">
+                            <button class="btn-remove-asset" onclick="removeSlot('jump')" style="padding: 4px; font-size: 10px;">Remover</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="asset-preview-list" id="assetPreviewList"></div>
             </div>
             
             <div class="editor-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
@@ -408,7 +469,12 @@
                     jumpForce: 717,
                     platformCount: 3
                 },
-                assets: {}
+                assets: {
+                    idle: null,
+                    run: null,
+                    jump: null,
+                    runFrames: 1
+                }
             },
             {
                 id: 'custom-game',
@@ -425,7 +491,12 @@
                     jumpForce: 717,
                     platformCount: 5
                 },
-                assets: {}
+                assets: {
+                    idle: null,
+                    run: null,
+                    jump: null,
+                    runFrames: 1
+                }
             }
         ];
 
@@ -435,43 +506,43 @@
         const mobileState = { left: false, right: false, jump: false };
 
         // --- ASSETS LOGIC ---
-        function handleAssetUpload(event) {
-            const files = event.target.files;
-            if (!files.length || !editingGame) return;
+        function handleSlotUpload(slot, event) {
+            const file = event.target.files[0];
+            if (!file || !editingGame) return;
 
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const name = file.name.split('.')[0].toLowerCase();
-                    editingGame.assets[name] = e.target.result;
-                    renderAssetPreviews();
-                };
-                reader.readAsDataURL(file);
-            });
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                editingGame.assets[slot] = e.target.result;
+                renderSlotPreviews();
+            };
+            reader.readAsDataURL(file);
         }
 
-        function removeAsset(name) {
+        function removeSlot(slot) {
             if (editingGame) {
-                delete editingGame.assets[name];
-                renderAssetPreviews();
+                editingGame.assets[slot] = null;
+                renderSlotPreviews();
             }
         }
 
-        function renderAssetPreviews() {
-            const list = document.getElementById('assetPreviewList');
-            list.innerHTML = '';
+        function updateFrameCount(slot, val) {
+            if (editingGame && slot === 'run') {
+                editingGame.assets.runFrames = parseInt(val) || 1;
+            }
+        }
+
+        function renderSlotPreviews() {
             if (!editingGame) return;
-            
-            Object.keys(editingGame.assets).forEach(name => {
-                const item = document.createElement('div');
-                item.className = 'asset-item';
-                item.innerHTML = `
-                    <img src="${editingGame.assets[name]}">
-                    <span>${name}</span>
-                    <button class="btn-remove-asset" onclick="removeAsset('${name}')">Remover</button>
-                `;
-                list.appendChild(item);
+            const slots = ['idle', 'run', 'jump'];
+            slots.forEach(slot => {
+                const preview = document.getElementById(`preview-${slot}`);
+                if (editingGame.assets[slot]) {
+                    preview.innerHTML = `<img src="${editingGame.assets[slot]}">`;
+                } else {
+                    preview.innerHTML = `<span>Vazio</span>`;
+                }
             });
+            document.getElementById('frames-run').value = editingGame.assets.runFrames || 1;
         }
 
         // --- GAME LOGIC ---
@@ -528,11 +599,23 @@
         }
 
         function preload() {
-            // Carregar Assets Específicos do Jogo
-            if (currentGame.assets['player']) {
-                this.load.image('gamePlayer', currentGame.assets['player']);
+            const assets = currentGame.assets;
+            
+            // Carregar Assets do Usuário
+            if (assets.idle) this.load.image('user_idle', assets.idle);
+            if (assets.jump) this.load.image('user_jump', assets.jump);
+            if (assets.run) {
+                // Para carregar a spritesheet dinamicamente, precisamos saber a largura da imagem.
+                // Como é base64, criaremos um objeto Image temporário para obter as dimensões.
+                const img = new Image();
+                img.src = assets.run;
+                img.onload = () => {
+                    const frameWidth = Math.floor(img.width / (assets.runFrames || 1));
+                    this.textures.addSpriteSheet('user_run', img, { frameWidth: frameWidth, frameHeight: img.height });
+                };
             }
 
+            // Gerar Texturas Padrão (Fallback)
             let graphics = this.make.graphics({ x: 0, y: 0, add: false });
             graphics.fillStyle(0xffffff); graphics.fillCircle(30, 30, 30);
             graphics.generateTexture('playerTexture', 60, 60);
@@ -567,9 +650,11 @@
 
         function create() {
             const settings = currentGame.settings;
+            const assets = currentGame.assets;
             const platforms = this.physics.add.staticGroup();
             const worldWidth = 1280, worldHeight = 720;
 
+            // Criar Chão e Plataformas
             for (let x = 0; x < worldWidth; x += 100) {
                 platforms.create(x, worldHeight - 20, 'platformTexture').setOrigin(0, 0).refreshBody()
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
@@ -581,12 +666,22 @@
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
             }
 
-            // Seleção de Sprite
-            if (currentGame.assets['player']) {
-                this.player = this.physics.add.sprite(100, 450, 'gamePlayer');
+            // --- Lógica de Animações Customizadas ---
+            if (assets.run && this.textures.exists('user_run')) {
+                this.anims.create({
+                    key: 'c_walk',
+                    frames: this.anims.generateFrameNumbers('user_run', { start: 0, end: assets.runFrames - 1 }),
+                    frameRate: 10,
+                    repeat: -1
+                });
+            }
+
+            // Criar Jogador
+            if (assets.idle) {
+                this.player = this.physics.add.sprite(100, 450, 'user_idle');
             } else if (currentGame.type === 'stickman') {
                 let tex = this.textures.get('stickmanSheet');
-                for(let i=0; i<4; i++) tex.add(i, 0, i*64, 0, 64, 64);
+                for(let i=0; i<4; i++) if(!tex.has(i)) tex.add(i, 0, i*64, 0, 64, 64);
                 if (!this.anims.exists('idle')) {
                     this.anims.create({ key: 'idle', frames: [{ key: 'stickmanSheet', frame: 0 }], frameRate: 1 });
                     this.anims.create({ key: 'walk', frames: [{ key: 'stickmanSheet', frame: 1 }, { key: 'stickmanSheet', frame: 2 }], frameRate: 8, repeat: -1 });
@@ -597,8 +692,12 @@
                 this.player = this.physics.add.sprite(100, 450, 'playerTexture');
             }
 
-            this.player.setBounce(0.1).setCollideWorldBounds(true)
-                .setTint(Phaser.Display.Color.HexStringToColor(settings.playerColor).color);
+            this.player.setBounce(0.1).setCollideWorldBounds(true);
+            
+            // Só aplicar Tint se não houver asset customizado (para não estragar as cores do pixel art)
+            if (!assets.idle && !assets.run) {
+                this.player.setTint(Phaser.Display.Color.HexStringToColor(settings.playerColor).color);
+            }
 
             this.physics.add.collider(this.player, platforms);
             this.cursors = this.input.keyboard.createCursorKeys();
@@ -610,7 +709,7 @@
 
         function update() {
             if (!this.player) return;
-            const player = this.player, keys = this.keys, cursors = this.cursors, settings = currentGame.settings;
+            const player = this.player, keys = this.keys, cursors = this.cursors, settings = currentGame.settings, assets = currentGame.assets;
             let moving = false;
 
             if (keys.A.isDown || cursors.left.isDown || mobileState.left) {
@@ -627,26 +726,40 @@
                 player.setVelocityY(-settings.jumpForce);
             }
 
-            if (currentGame.type === 'stickman' && !currentGame.assets['player']) {
-                if (!player.body.touching.down) player.play('jump', true);
+            // --- Gerenciamento de Animação ---
+            const onGround = player.body.touching.down;
+            
+            if (assets.idle || assets.run || assets.jump) {
+                // Lógica para Assets Customizados
+                if (!onGround && assets.jump) {
+                    player.setTexture('user_jump');
+                } else if (moving && assets.run && this.textures.exists('user_run')) {
+                    player.play('c_walk', true);
+                } else if (assets.idle) {
+                    player.setTexture('user_idle');
+                    player.anims.stop();
+                }
+            } else if (currentGame.type === 'stickman') {
+                // Lógica Fallback Boneco Palito
+                if (!onGround) player.play('jump', true);
                 else if (moving) player.play('walk', true);
                 else player.play('idle', true);
             }
         }
 
         function editGame(gameId) {
-            editingGame = gamesConfig.find(g => g.id === gameId);
+            editingGame = JSON.parse(JSON.stringify(gamesConfig.find(g => g.id === gameId)));
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('editorPanel').classList.add('active');
             document.getElementById('editorTitle').textContent = `Editar: ${editingGame.name}`;
             renderEditorGrid();
-            renderAssetPreviews();
+            renderSlotPreviews();
         }
 
         function renderEditorGrid() {
             const grid = document.getElementById('editorGrid'), s = editingGame.settings;
             grid.innerHTML = `
-                <div class="editor-item"><label>Cor Jogador</label><input type="color" id="pCol" value="${s.playerColor}"></div>
+                <div class="editor-item"><label>Cor Jogador (Fallback)</label><input type="color" id="pCol" value="${s.playerColor}"></div>
                 <div class="editor-item"><label>Cor Plataforma</label><input type="color" id="platCol" value="${s.platformColor}"></div>
                 <div class="editor-item"><label>Cor Fundo</label><input type="color" id="bgCol" value="${s.backgroundColor}"></div>
                 <div class="editor-item"><label>Gravidade</label><input type="range" id="grav" min="500" max="2000" value="${s.gravity}"></div>
@@ -661,8 +774,11 @@
             editingGame.settings.gravity = parseInt(document.getElementById('grav').value);
             editingGame.settings.playerSpeed = parseInt(document.getElementById('speed').value);
             
+            const idx = gamesConfig.findIndex(g => g.id === editingGame.id);
+            gamesConfig[idx] = editingGame;
+            
             localStorage.setItem('gamesConfig', JSON.stringify(gamesConfig));
-            alert('✅ Alterações salvas com sucesso!');
+            alert('✅ Configurações e Animações salvas!');
             cancelEdit();
         }
 
