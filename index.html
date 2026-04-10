@@ -530,7 +530,6 @@
         }
 
         // --- BLOB URL HELPER ---
-        // Converte base64 para Blob URL para evitar erro "Local data URIs are not supported"
         function base64ToBlobUrl(base64) {
             if (!base64 || !base64.startsWith('data:')) return null;
             try {
@@ -601,7 +600,7 @@
                 width: 1280, height: 720,
                 parent: 'gameContainer',
                 backgroundColor: currentGame.settings.backgroundColor,
-                pixelArt: true, // Garante que pixel art fique nítida
+                pixelArt: true,
                 render: { pixelArt: true, antialias: false },
                 scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
                 physics: { default: 'arcade', arcade: { gravity: { y: currentGame.settings.gravity }, debug: false } },
@@ -645,7 +644,7 @@
             graphics.fillStyle(0xffffff); graphics.fillRect(0, 0, 100, 20);
             graphics.generateTexture('platformTexture', 100, 20);
 
-            // Carregar Assets via Blob URL para evitar erro de segurança
+            // Carregar Assets via Blob URL
             const idleBlob = base64ToBlobUrl(assets.idle);
             if (idleBlob) this.load.image('user_idle', idleBlob);
             
@@ -662,7 +661,6 @@
             const platforms = this.physics.add.staticGroup();
             const worldWidth = 1280, worldHeight = 720;
 
-            // Criar Chão e Plataformas
             for (let x = 0; x < worldWidth; x += 100) {
                 platforms.create(x, worldHeight - 10, 'platformTexture').setScale(1, 1).refreshBody()
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
@@ -674,14 +672,12 @@
                     .setTint(Phaser.Display.Color.HexStringToColor(settings.platformColor).color);
             }
 
-            // --- Lógica de Animações Customizadas ---
+            // --- Animações Customizadas ---
             if (this.textures.exists('user_run_raw')) {
                 const runTex = this.textures.get('user_run_raw').getSourceImage();
                 const frameWidth = Math.floor(runTex.width / (assets.runFrames || 1));
                 const frameHeight = runTex.height;
-                
                 this.textures.addSpriteSheet('user_run', runTex, { frameWidth, frameHeight });
-                
                 this.anims.create({
                     key: 'c_walk',
                     frames: this.anims.generateFrameNumbers('user_run', { start: 0, end: (assets.runFrames || 1) - 1 }),
@@ -704,11 +700,10 @@
                 this.player = this.physics.add.sprite(100, 450, 'stickmanSheet', 0);
             } else {
                 this.player = this.physics.add.sprite(100, 450, 'playerTexture');
-                this.player.setTint(0x3498db); // Cor padrão se for bola
+                this.player.setTint(0x3498db);
             }
 
             this.player.setBounce(0.1).setCollideWorldBounds(true);
-            
             this.physics.add.collider(this.player, platforms);
             this.cursors = this.input.keyboard.createCursorKeys();
             this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
@@ -718,7 +713,7 @@
 
         function update() {
             if (!this.player) return;
-            const player = this.player, keys = this.keys, cursors = this.cursors, settings = currentGame.settings, assets = currentGame.assets;
+            const player = this.player, keys = this.keys, cursors = this.cursors, settings = currentGame.settings;
             let moving = false;
 
             if (keys.A.isDown || cursors.left.isDown || mobileState.left) {
@@ -735,9 +730,7 @@
                 player.setVelocityY(-settings.jumpForce);
             }
 
-            // --- Gerenciamento de Animação ---
             const onGround = player.body.touching.down;
-            
             if (this.textures.exists('user_idle') || this.textures.exists('user_run') || this.textures.exists('user_jump')) {
                 if (!onGround && this.textures.exists('user_jump')) {
                     player.setTexture('user_jump');
@@ -760,17 +753,14 @@
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('editorPanel').classList.add('active');
             document.getElementById('editorTitle').innerText = `Editar: ${editingGame.name}`;
-            
             const grid = document.getElementById('editorGrid');
             grid.innerHTML = '';
-            
             const settingsMap = [
                 { key: 'platformColor', label: 'Cor Plataforma', type: 'color' },
                 { key: 'backgroundColor', label: 'Cor Fundo', type: 'color' },
                 { key: 'gravity', label: 'Gravidade', type: 'range', min: 500, max: 3000 },
                 { key: 'playerSpeed', label: 'Velocidade', type: 'range', min: 100, max: 800 }
             ];
-
             settingsMap.forEach(s => {
                 const item = document.createElement('div');
                 item.className = 'editor-item';
@@ -782,14 +772,11 @@
                 `;
                 grid.appendChild(item);
             });
-            
             renderSlotPreviews();
         }
 
         function updateSetting(key, val) {
-            if (editingGame) {
-                editingGame.settings[key] = (key === 'gravity' || key === 'playerSpeed') ? parseInt(val) : val;
-            }
+            if (editingGame) editingGame.settings[key] = (key === 'gravity' || key === 'playerSpeed') ? parseInt(val) : val;
         }
 
         function saveEditor() {
@@ -807,17 +794,13 @@
         }
 
         function exitGame() {
-            if (gameInstance) {
-                gameInstance.destroy(true);
-                gameInstance = null;
-            }
+            if (gameInstance) { gameInstance.destroy(true); gameInstance = null; }
             document.getElementById('gameContainer').classList.remove('active');
             document.getElementById('gameUI').style.display = 'none';
             document.getElementById('mobileControls').classList.remove('active');
             document.getElementById('mainMenu').classList.remove('hidden');
         }
 
-        // INICIALIZAÇÃO
         renderGamesGrid();
         setupMobileButtons();
     </script>
